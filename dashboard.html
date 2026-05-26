@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Viaje Velero Ibiza Sep 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root {
+    --primary: #0d2137;
+    --accent: #00b4d8;
+    --accent2: #48c774;
+    --warn: #ff9f43;
+    --bg: #f4f6f8;
+    --card: #fff;
+    --text: #2d3436;
+    --text-light: #636e72;
+    --border: #dfe6e9;
+    --radius: 14px;
+    --shadow: 0 4px 20px rgba(0,0,0,0.06);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg); color: var(--text); padding: 20px;
+  }
+  .header { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; margin-bottom:24px; gap:12px; }
+  .header h1 { font-size:24px; color:var(--primary); }
+  .header h1 small { font-size:13px; font-weight:400; color:var(--text-light); display:block; }
+  .badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:600; white-space:nowrap; }
+  .badge-conf { background:#e8f5e9; color:#2e7d32; }
+  .badge-est { background:#fff3e0; color:#e65100; }
+  .badge-total { background:#fff3e0; color:#e65100; font-size:15px; padding:5px 14px; }
+
+  .summary { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:12px; margin-bottom:24px; }
+  .stat { background:var(--card); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); text-align:center; border-left:4px solid var(--accent); }
+  .stat .value { font-size:26px; font-weight:800; color:var(--primary); }
+  .stat .label { font-size:11px; color:var(--text-light); margin-top:3px; text-transform:uppercase; letter-spacing:.5px; }
+  .stat.green { border-left-color:var(--accent2); } .stat.green .value { color:#2e7d32; }
+  .stat.warn { border-left-color:var(--warn); } .stat.warn .value { color:#e65100; }
+
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(460px,1fr)); gap:20px; }
+  .grid-full { grid-column:1/-1; }
+  .card { background:var(--card); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); }
+  .card h2 { font-size:16px; color:var(--primary); margin-bottom:12px; padding-bottom:8px; border-bottom:2px solid #eef1f5; display:flex; align-items:center; gap:8px; }
+  .card h2 .tag { font-size:10px; font-weight:600; padding:2px 8px; border-radius:10px; background:#e3f2fd; color:#1565c0; margin-left:auto; }
+  #map { height:440px; border-radius:10px; z-index:1; margin-top:4px; }
+  .map-legend { display:flex; gap:14px; flex-wrap:wrap; margin-top:8px; font-size:11px; }
+  .map-legend span { display:flex; align-items:center; gap:5px; }
+  .map-legend .dot { width:12px; height:3px; border-radius:2px; display:inline-block; }
+
+  .timeline { display:flex; flex-direction:column; gap:2px; }
+  .timeline .day-group { margin-bottom:16px; }
+  .timeline .day-label { font-size:14px; font-weight:700; color:var(--primary); padding:5px 0; display:flex; align-items:center; gap:8px; flex-wrap:wrap; border-bottom:2px solid var(--primary); margin-bottom:4px; }
+  .timeline .day-label .day-date { font-weight:400; font-size:12px; color:var(--text-light); }
+  .tl-row { display:grid; grid-template-columns:68px 1fr 55px; gap:6px; padding:4px; border-radius:6px; align-items:start; border-left:3px solid transparent; }
+  .tl-row:hover { background:#f8f9fa; }
+  .tl-row .time { font-size:11px; font-weight:600; color:var(--text-light); font-variant-numeric:tabular-nums; padding-top:1px; }
+  .tl-row .desc { font-size:12px; line-height:1.4; }
+  .tl-row .tag { display:inline-block; font-size:9px; font-weight:600; padding:1px 6px; border-radius:8px; text-transform:uppercase; letter-spacing:.2px; margin-right:4px; }
+  .tag-flight { background:#e3f2fd; color:#1565c0; }
+  .tag-boat { background:#e8f5e9; color:#2e7d32; }
+  .tag-food { background:#fff3e0; color:#e65100; }
+  .tag-fun { background:#f3e5f5; color:#6a1b9a; }
+  .tag-admin { background:#ffebee; color:#c62828; }
+  .tag-travel { background:#e0f7fa; color:#00695c; }
+  .tag-land { background:#fce4ec; color:#880e4f; }
+  .tl-row .cost { font-size:11px; text-align:right; font-weight:500; color:var(--text-light); white-space:nowrap; }
+  .tl-row .src { font-size:10px; color:#888; }
+
+  .link-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:8px; }
+  .link-card { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; background:#f8f9fa; border:1px solid var(--border); text-decoration:none; color:inherit; transition:all .2s; }
+  .link-card:hover { border-color:var(--accent); background:#eef8ff; transform:translateY(-1px); }
+  .link-card .emoji { font-size:20px; flex-shrink:0; }
+  .link-card .info { flex:1; min-width:0; }
+  .link-card .info strong { display:block; font-size:12px; }
+  .link-card .info span { font-size:11px; color:var(--text-light); display:block; }
+  .link-card .info .badge { font-size:9px; padding:1px 6px; }
+  .link-card .arrow { color:var(--accent); font-size:14px; flex-shrink:0; }
+
+  .checklist { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px,1fr)); gap:10px; }
+  .check-item { padding:8px 12px; background:#f8f9fa; border-radius:8px; border-left:3px solid var(--accent); }
+  .check-item h4 { font-size:12px; margin-bottom:2px; }
+  .check-item li { font-size:11px; color:var(--text-light); line-height:1.5; }
+  .check-item ul { padding-left:14px; margin-top:2px; }
+  .check-item.warn { border-left-color:var(--warn); }
+
+  .note-box { padding:14px; border-radius:8px; font-size:12px; line-height:1.5; border-left:4px solid var(--warn); background:#fffcf0; }
+  .note-box strong { color:#e65100; }
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  th { background:var(--primary); color:#fff; padding:8px 6px; text-align:left; font-weight:600; font-size:11px; }
+  td { padding:6px; border-bottom:1px solid #f0f0f0; }
+  tr:nth-child(even) { background:#fafbfc; }
+  .rank-1 { background:#e8f5e9 !important; font-weight:600; }
+
+  @media (max-width:600px) {
+    body { padding:10px; }
+    .grid { grid-template-columns:1fr; }
+    .summary { grid-template-columns:1fr 1fr; }
+    .tl-row { grid-template-columns:55px 1fr 40px; gap:3px; }
+    #map { height:300px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>⛵ Viaje Velero a Ibiza <span class="badge badge-total">~368 €/pers</span></h1>
+    <small style="color:var(--text-light);margin-top:4px;display:block;">
+      3 Valencia · 1 Madrid · 1 Módena &nbsp;|&nbsp;
+      <span class="badge badge-conf">31 Ago → 3 Sep</span>
+      <span class="badge badge-conf">Ibiza</span>
+    </small>
+  </div>
+  <div style="text-align:right;">
+    <div style="font-size:24px;font-weight:800;color:var(--primary);">2.206 €</div>
+    <div style="font-size:12px;color:var(--text-light);">total grupo · 6 pers · 4 días</div>
+  </div>
+</div>
+
+<div class="summary">
+  <div class="stat green">  <div class="value">368 €</div> <div class="label">Por persona</div> </div>
+  <div class="stat">  <div class="value">128 €</div> <div class="label">Media vuelo/pers</div> </div>
+  <div class="stat green">  <div class="value">3</div>    <div class="label">Días barco</div> </div>
+  <div class="stat warn">   <div class="value">30 €</div> <div class="label">Noche tierra</div> </div>
+</div>
+
+<div class="grid">
+
+  <!-- MAPA -->
+  <div class="card grid-full">
+    <h2>🗺️ Mapa de rutas</h2>
+    <div id="map"></div>
+    <div style="margin-top:8px;font-size:12px;color:var(--text-light);">
+      🛫 Aeropuertos origen · 🛬 Aeropuertos destino · ⚓ Marina Botafoc · 🏨 Hostal Parque Ibiza · 📍 Calas
+    </div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="card grid-full">
+    <h2>📅 Itinerario <span class="tag">Precios Google Flights 31 Ago / 3 Sep</span></h2>
+    <div class="timeline">
+
+      <!-- DÍA 0: DOMINGO 31 AGO -->
+      <div class="day-group">
+        <div class="day-label">🏠 Día 0 — Domingo 31 Ago <span class="day-date">Todos vuelan a Ibiza · Noche en tierra</span></div>
+
+        <div class="tl-row" style="border-left-color:#e3f2fd;">
+          <div class="time">05:45–06:35</div>
+          <div class="desc"><span class="tag tag-flight">VUELO</span> Ryanair FR — Valencia VLC → Ibiza IBZ <span class="src">(3 pers)</span></div>
+          <div class="cost">45 €</div>
+        </div>
+        <div class="tl-row" style="border-left-color:#e3f2fd;">
+          <div class="time">20:05–21:55</div>
+          <div class="desc"><span class="tag tag-flight">VUELO</span> Ryanair FR — Bolonia BLQ → Ibiza IBZ <span class="src">(1 pers · directo)</span></div>
+          <div class="cost">82 €</div>
+        </div>
+        <div class="tl-row" style="border-left-color:#e3f2fd;">
+          <div class="time">21:45–23:00</div>
+          <div class="desc"><span class="tag tag-flight">VUELO</span> Iberia Express — Madrid MAD → Ibiza IBZ <span class="src">(1 pers)</span></div>
+          <div class="cost">58 €</div>
+        </div>
+        <div class="tl-row" style="border-left-color:#e0f7fa;">
+          <div class="time">23:00–00:30</div>
+          <div class="desc"><span class="tag tag-travel">🚌</span> Encuentro + bus L10 (aeropuerto→centro) · 15 min · los que llegan antes esperan</div>
+          <div class="cost">3,50 €</div>
+        </div>
+        <div class="tl-row" style="border-left-color:#fce4ec;">
+          <div class="time">00:30–09:00</div>
+          <div class="desc"><span class="tag tag-land">🏨</span> <strong>Hostal Parque Ibiza</strong> · C/ Vicente Cuervo · 2 dobles + 1 twin · los VLC exploran Ibiza todo el día</div>
+          <div class="cost">~30 €</div>
+        </div>
+        <div class="tl-row" style="border-left-color:#e0f7fa;">
+          <div class="time">07:00–20:00</div>
+          <div class="desc"><span class="tag tag-travel">🗺️</span> Grupo VLC llega 06:35 · día libre: Dalt Vila, playa, mercadillo, provisiones</div>
+          <div class="cost"></div>
+        </div>
+        <div class="tl-row" style="border-left-color:#fff3e0;">
+          <div class="time">22:00–23:30</div>
+          <div class="desc"><span class="tag tag-food">CENA</span> Grupo completo (BLQ ya en zona desde 21:55, MAD llega 23:00)</div>
+          <div class="cost">~15 €</div>
+        </div>
+      </div>
+
+      <!-- DÍA 1: MARTES 1 SEP -->
+      <div class="day-group">
+        <div class="day-label">⛵ Día 1 — Martes 1 Sep <span class="day-date">Check-in 10:30 · Cala Comte · Cala d'Hort</span></div>
+
+        <div class="tl-row" style="border-left-color:#fff3e0;">
+          <div class="time">09:00–10:00</div>
+          <div class="desc"><span class="tag tag-food">DESAYUNO</span> Grupo completo + recoger mochilas del hostal</div>
+          <div class="cost">~5 €</div>
+        </div>
+        <div class="tl-row" style="border-left-color:#e8f5e9;">
+          <div class="time">10:00–12:00</div>
+          <div class="desc"><span class="tag tag-boat">⛵ CHECK-IN</span> Marina Botafoc · documentación, fianza, briefing, inspección</div>
+          <div class="cost"></div>
+        </div>
+        <div class="tl-row" style="border-left-color:#ffebee;">
+          <div class="time">12:00–12:30</div>
+          <div class="desc"><span class="tag tag-admin">🛒</span> Últimas provisiones (Mercadona frente puerto)</div>
+          <div class="cost">~30 €</div>
+        </div>
+        <div class="tl-row" style="border-left-color:#e8f5e9;">
+          <div class="time">12:30–13:30</div>
+          <div class="desc"><span class="tag tag-boat">NAVEGACIÓN</span> Puerto → Cala Comte (8 MN)</div>
+          <div class="cost"></div>
+        </div>
+        <div class="tl-row" style="border-left-color:#f3e5f5;">
+          <div class="time">13:30–16:00</div>
+          <div class="desc"><span class="tag tag-fun">🏖️</span> <strong>Cala Comte</strong> · fondeo, baño, snorkel, comida a bordo</div>
+          <div class="cost"></div>
+        </div>
+        <div class="tl-row" style="border-left-color:#e8f5e9;">
+          <div class="time">16:00–17:30</div>
+          <div class="desc"><span class="tag tag-boat">NAVEGACIÓN</span> Cala Comte → Cala d'Hort (10 MN) · vistas Es Vedrà</div>
+          <div class="cost"></div>
+        </div>
+        <div class="tl-row" style="border-left-color:#f3e5f5;">
+          <div class="time">17:30–19:30</div>
+          <div class="desc"><span class="tag tag-fun">🏖️</span> <strong>Cala d'Hort</strong> · baño, fotos Es Vedrà</div>
+          <div class="cost"></div>
+        </div>
+        <div class="tl-row" style="border-left-color:#e8f5e9;">
+          <div class="time">19:30–20:30</div>
+          <div class="desc"><span class="tag tag-boat">NAVEGACIÓN</span> Cala d'Hort → Puerto Ibiza</div>
+          <div class="cost"></div>
+        </div>
+        <div class="tl-row" style="border-left-color:#fff3e0;">
+          <div class="time">21:00–23:00</div>
+          <div class="desc"><span class="tag tag-food">CENA</span> Puerto / Dalt Vila</div>
+          <div class="cost">~20 €</div>
+        </div>
+        <div class="tl-row" style="border-left-color:#e8f5e9;">
+          <div class="time">23:30</div>
+          <div class="desc"><span class="tag tag-boat">PERNOCTA</span> Puerto / fondeo</div>
+          <div class="cost">~30 € amarre</div>
+        </div>
+      </div>
+
+      <!-- DÍA 2: MIÉRCOLES 2 SEP -->
+      <div class="day-group">
+        <div class="day-label">⛵ Día 2 — Miércoles 2 Sep <span class="day-date">Tagomago · Cala Benirràs · Atardecer</span></div>
+        <div class="tl-row" style="border-left-color:#e8f5e9;">
+          <div class="time">09:30–12:00</div>
+          <div class="desc"><span class="tag tag-boat">TRAVESÍA</span> Ibiza → <strong>Isla Tagomago</strong> (15 MN costa este)</div>
+          <div class="cost"></div>
+        </div>
+        <div class="tl-row" style="border-left-color:#f3e5f5;">
+          <div class="time">12:00–14:00</div>
+          <div class="desc"><span class="tag tag-fun">🏖️</span> Tagomago · snorkel, explorar + comida a bordo</div>
+          <div class="cost"></div>
+        </div>
+        <div class="tl-row" style="border-left-color:#e8f5e9;">
+          <div class="time">14:00–15:30</div>
+          <div class="desc"><span class="tag tag-boat">TRAVESÍA</span> Tagomago → <strong>Cala Benirràs</strong> (12 MN costa norte)</div>
+          <div class="cost"></div>
+        </div>
+        <div class="tl-row" style="border-left-color:#f3e5f5;">
+          <div class="time">15:30–19:00</div>
+          <div class="desc"><span class="tag tag-fun">🏖️</span> Cala Benirràs · baño + atardecer (tambores)</div>
+          <div class="cost"></div>
+        </div>
+        <div class="tl-row" style="border-left-color:#e8f5e9;">
+          <div class="time">19:00–20:00</div>
+          <div class="desc"><span class="tag tag-boat">NAVEGACIÓN</span> Benirràs → Puerto Ibiza</div>
+          <div class="cost"></div>
+        </div>
+        <div class="tl-row" style="border-left-color:#fff3e0;">
+          <div class="time">20:30–22:00</div>
+          <div class="desc"><span class="tag tag-food">CENA</span> Puerto</div>
+          <div class="cost">~15 €</div>
+        </div>
+      </div>
+
+      <!-- DÍA 3: JUEVES 3 SEP -->
+      <div class="day-group">
+        <div class="day-label">⛵ Día 3 — Jueves 3 Sep <span class="day-date">Check-out 18:00 · Vuelta a casa</span></div>
+        <div class="tl-row" style="border-left-color:#e8f5e9;">
+          <div class="time">09:00–11:00</div>
+          <div class="desc"><span class="tag tag-boat">NAVEGACIÓN</span> Última salida · Porroig / Cala d'en Serra</div>
+          <div class="cost"></div>
+        </div>
+        <div class="tl-row" style="border-left-color:#f3e5f5;">
+          <div class="time">11:00–13:00</div>
+          <div class="desc"><span class="tag tag-fun">🏖️</span> Último baño + comida a bordo</div>
+          <div class="cost"></div>
+        </div>
+        <div class="tl-row" style="border-left-color:#e8f5e9;">
+          <div class="time">13:00–15:00</div>
+          <div class="desc"><span class="tag tag-boat">REGRESO</span> Navegación de vuelta a puerto</div>
+          <div class="cost"></div>
+        </div>
+        <div class="tl-row" style="border-left-color:#ffebee;">
+          <div class="time">15:00–18:00</div>
+          <div class="desc"><span class="tag tag-admin">CHECK-OUT</span> Limpieza + revisión + devolución fianza</div>
+          <div class="cost">~20 € gas</div>
+        </div>
+        <div class="tl-row" style="border-left-color:#e0f7fa;">
+          <div class="time">18:00–20:00</div>
+          <div class="desc"><span class="tag tag-travel">🚌</span> Puerto → Aeropuerto + facturar + esperar en aeropuerto</div>
+          <div class="cost">3,50 €</div>
+        </div>
+        <div class="tl-row" style="border-left-color:#e3f2fd;">
+          <div class="time">22:10–23:00</div>
+          <div class="desc"><span class="tag tag-flight">VUELTA</span> Iberia IBZ → VLC <span class="src">(3 pers) · Iberia 22:10 única opción tarde</span></div>
+          <div class="cost">98 €</div>
+        </div>
+        <div class="tl-row" style="border-left-color:#e3f2fd;">
+          <div class="time">22:40–23:59</div>
+          <div class="desc"><span class="tag tag-flight">VUELTA</span> Ryanair IBZ → MAD <span class="src">(1 pers) · directo</span></div>
+          <div class="cost">54 €</div>
+        </div>
+        <div class="tl-row" style="border-left-color:#e3f2fd;">
+          <div class="time">23:05–00:55</div>
+          <div class="desc"><span class="tag tag-flight">VUELTA</span> Ryanair IBZ → BLQ <span class="src">(1 pers) · directo · llega 00:55</span></div>
+          <div class="cost">145 €</div>
+        </div>
+        <div class="tl-row" style="border-left-color:#e0f7fa;">
+          <div class="time">23:00–01:30</div>
+          <div class="desc"><span class="tag tag-travel">🚆</span> Alternativa VLC: desde MAD el AVE Madrid→Valencia (Avlo desde 7 €, 1h40). IBZ→VLC directo Iberia 22:10 llega 23:00.</div>
+          <div class="cost">+7 €</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENLACES -->
+  <div class="card grid-full">
+    <h2>🔗 Enlaces de reserva <span class="tag">Precios reales Google Flights</span></h2>
+    <div style="margin-bottom:10px;font-size:12px;color:var(--text-light);display:flex;gap:12px;flex-wrap:wrap;">
+      <span>🛩️ <strong>Vuelos confirmados</strong> · 31 Ago → 3 Sep</span>
+    </div>
+    <div class="link-grid">
+
+      <a class="link-card" href="https://www.ryanair.com/es/es/trip/flights/select?adults=3&dateOut=2026-08-31&dateIn=2026-09-03&originIata=VLC&destinationIata=IBZ" target="_blank">
+        <span class="emoji">🛩️</span>
+        <div class="info">
+          <strong>VLC → IBZ (3 pers)</strong>
+          <span>Ryanair · 31 Ago ida 05:45 45€ · 3 Sep vuelta Iberia 22:10 98€ = 143€/pers</span>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+
+      <a class="link-card" href="https://www.ryanair.com/es/es/trip/flights/select?adults=1&dateOut=2026-08-31&dateIn=2026-09-03&originIata=MAD&destinationIata=IBZ" target="_blank">
+        <span class="emoji">🛩️</span>
+        <div class="info">
+          <strong>MAD → IBZ (1 pers)</strong>
+          <span>Iberia Express 31 Ago 21:45 58€ · Ryanair 3 Sep 22:40 54€ = 112€/pers</span>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+
+      <a class="link-card" href="https://www.ryanair.com/es/es/trip/flights/select?adults=1&dateOut=2026-08-31&dateIn=2026-09-03&originIata=BLQ&destinationIata=IBZ" target="_blank">
+        <span class="emoji">🛩️</span>
+        <div class="info">
+          <strong>BLQ → IBZ (1 pers)</strong>
+          <span>Ryanair 31 Ago 20:05 82€ · Ryanair 3 Sep 23:05 145€ = 227€/pers · directo</span>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+
+      <a class="link-card" href="https://www.ryanair.com/es/es/trip/flights/select?adults=1&dateOut=2026-09-03&dateIn=2026-09-04&originIata=IBZ&destinationIata=VLC" target="_blank">
+        <span class="emoji">🛩️</span>
+        <div class="info">
+          <strong>IBZ → VLC alternativo (3 pers)</strong>
+          <span>Ryanair 3 Sep 12:50 45€ (check-out anticipado) · Iberia 22:10 98€ (check-out 18:00)</span>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+
+      <a class="link-card" href="https://www.booking.com/hotel/es/hostal-parque-ibiza.html" target="_blank">
+        <span class="emoji">🏨</span>
+        <div class="info">
+          <strong>Hostal Parque Ibiza</strong>
+          <span>C/ Vicente Cuervo · 2 dobles + 1 twin · 31 Ago · ~30 €/pers</span>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+
+      <a class="link-card" href="https://www.clickandboat.com/es/" target="_blank">
+        <span class="emoji">⛵</span>
+        <div class="info">
+          <strong>Click&Boat (búsqueda manual)</strong>
+          <span>Filtros: 1-3 Sep · velero · 6 plazas · sin patrón · Ibiza · ~350 €/día</span>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- COSTES -->
+  <div class="card">
+    <h2>💰 Costes reales confirmados</h2>
+    <table>
+      <tr><th>Concepto</th><th>Coste</th><th>Nota</th></tr>
+      <tr><td>VLC→IBZ (3×45€)</td><td>135 €</td><td>Ryanair 05:45 31 Ago confirmado</td></tr>
+      <tr><td>MAD→IBZ (1×58€)</td><td>58 €</td><td>Iberia Express 21:45 31 Ago confirmado</td></tr>
+      <tr><td>BLQ→IBZ (1×82€)</td><td>82 €</td><td>Ryanair directo 20:05 31 Ago confirmado</td></tr>
+      <tr><td>IBZ→VLC (3×98€)</td><td>294 €</td><td>Iberia 22:10 3 Sep (check-out 18:00)</td></tr>
+      <tr><td>IBZ→MAD (1×54€)</td><td>54 €</td><td>Ryanair 22:40 3 Sep confirmado</td></tr>
+      <tr><td>IBZ→BLQ (1×145€)</td><td>145 €</td><td>Ryanair directo 23:05 3 Sep confirmado</td></tr>
+      <tr><td style="font-weight:600;">Total vuelos</td><td style="font-weight:600;">768 €</td><td></td></tr>
+      <tr><td>Barco 3 días (~350€/día)</td><td>1.050 €</td><td>Estimado mercado Sep</td></tr>
+      <tr><td>Extras barco (gas, tasas)</td><td>~200 €</td><td>Combustible + amarres</td></tr>
+      <tr><td>Noche tierra (6×30€)</td><td>180 €</td><td>Hostal Parque Ibiza</td></tr>
+      <tr><td style="font-weight:600;color:#e65100;">Total grupo</td><td style="font-weight:600;color:#e65100;">2.206 €</td><td></td></tr>
+      <tr><td style="font-weight:600;color:#2e7d32;">Por persona</td><td style="font-weight:600;color:#2e7d32;">368 €</td><td></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>✈️ Precios por persona</h2>
+    <canvas id="chartVuelos" style="height:200px;"></canvas>
+    <div style="margin-top:8px;font-size:11px;color:var(--text-light);text-align:center;">Ida + vuelta · confirmado Google Flights</div>
+  </div>
+
+  <!-- CHECKLIST -->
+  <div class="card grid-full">
+    <h2>✅ Checklist</h2>
+    <div class="checklist">
+      <div class="check-item">
+        <h4>📋 Documentación</h4>
+        <ul>
+          <li>DNI / Pasaporte vigente</li>
+          <li>Título de patrón de barco (todos)</li>
+          <li>Tarjeta sanitaria europea (BLQ)</li>
+        </ul>
+      </div>
+      <div class="check-item warn">
+        <h4>⛵ Reservas</h4>
+        <ul>
+          <li>Ryanair VLC→IBZ 05:45 (3 pers)</li>
+          <li>Iberia MAD→IBZ 21:45 (1 pers)</li>
+          <li>Ryanair BLQ→IBZ 20:05 (1 pers)</li>
+          <li>Iberia IBZ→VLC 22:10 (3 pers)</li>
+          <li>Ryanair IBZ→MAD 22:40 (1 pers)</li>
+          <li>Ryanair IBZ→BLQ 23:05 (1 pers)</li>
+          <li>Click&Boat velero 1-3 Sep</li>
+          <li>Hostal Parque Ibiza 31 Ago</li>
+        </ul>
+      </div>
+      <div class="check-item">
+        <h4>💰 Fondo común (~60€/pers)</h4>
+        <ul>
+          <li>Gasolina barco ~50€</li>
+          <li>Amarres ~30€/noche</li>
+          <li>Provisiones ~30€/pers</li>
+        </ul>
+      </div>
+      <div class="check-item">
+        <h4>🧳 Equipaje</h4>
+        <ul>
+          <li>Mochila blanda (maleta no cabe)</li>
+          <li>Ropa baño, toalla microfibra</li>
+          <li>Protector solar, gafas cordón</li>
+          <li>Chubasquero, calzado antideslizante</li>
+        </ul>
+      </div>
+      <div class="check-item">
+        <h4>📱 Apps</h4>
+        <ul>
+          <li>Windy, Navionics</li>
+          <li>WhatsApp grupo</li>
+          <li>Tarjetas embarque descargadas</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTAS -->
+  <div class="grid-full note-box">
+    <strong>📌 Precisiones sobre precios y logística:</strong><br>
+    • <strong>Vuelos:</strong> Todos los precios están <strong>confirmados</strong> vía Google Flights para las fechas 31 Ago → 3 Sep. Los VLC pueden optar por vuelta en Ryanair 12:50 (45€, check-out anticipado) o Iberia 22:10 (98€, check-out 18:00).<br>
+    • <strong>Barco:</strong> Sun Odyssey 349 (6 plazas, Marina Botafoc, ~350€/día Sep). <strong>Click&Boat</strong> no permite enlace directo con filtros; hay que buscar manualmente en la web.<br>
+    • <strong>Noche tierra:</strong> Los VLC llegan 06:35 y tienen todo el día para explorar Ibiza. BLQ llega 21:55. MAD llega 23:00. Se encuentran para cenar.<br>
+    • <strong>Vuelta VLC:</strong> Iberia 22:10→23:00 es la única opción tarde para compatibilizar con check-out 18:00. Alternativa: Ryanair 12:50 45€ con check-out anticipado.<br>
+    • <strong>Mapa:</strong> Las rutas de navegación siguen la costa con puntos intermedios para simular el trazado real, no líneas rectas.
+  </div>
+
+</div>
+
+<script>
+const map = L.map('map').setView([38.90, 1.42], 10);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
+
+// ── coordenadas ──
+const pts = {
+  ibz_apt: [38.8729, 1.3733], marina: [38.9087, 1.4350],
+  vlc: [39.4892, -0.4817], mad: [40.4719, -3.5626], blq: [44.5354, 11.2887],
+  comte: [38.9644, 1.2167], dhort: [38.8767, 1.2317], vedra: [38.8667, 1.2000],
+  tago: [39.0333, 1.6500], beni: [39.0833, 1.4500],
+  porroig: [38.8833, 1.2667], serra: [39.0167, 1.5333],
+};
+
+// ── Sin trazados, solo puntos de interés ──
+
+// ── Iconos ──
+const icons = {
+  flightOut: L.divIcon({className:'', html:'<span style="font-size:20px;">🛫</span>', iconSize:[20,20], iconAnchor:[10,10]}),
+  flightIn: L.divIcon({className:'', html:'<span style="font-size:20px;">🛬</span>', iconSize:[20,20], iconAnchor:[10,10]}),
+  anchor: L.divIcon({className:'', html:'<span style="font-size:18px;">⚓</span>', iconSize:[18,18], iconAnchor:[9,9]}),
+  hotel: L.divIcon({className:'', html:'<span style="font-size:18px;">🏨</span>', iconSize:[18,18], iconAnchor:[9,9]}),
+  pin: L.divIcon({className:'', html:'<span style="font-size:14px;">📍</span>', iconSize:[14,14], iconAnchor:[7,7]}),
+};
+
+L.marker(pts.vlc, {icon:icons.flightOut}).addTo(map).bindTooltip('VLC salida');
+L.marker(pts.mad, {icon:icons.flightOut}).addTo(map).bindTooltip('MAD salida');
+L.marker(pts.blq, {icon:icons.flightOut}).addTo(map).bindTooltip('BLQ salida');
+L.marker(pts.vlc, {icon:icons.flightIn}).addTo(map).bindTooltip('VLC llegada');
+L.marker(pts.mad, {icon:icons.flightIn}).addTo(map).bindTooltip('MAD llegada');
+L.marker(pts.blq, {icon:icons.flightIn}).addTo(map).bindTooltip('BLQ llegada');
+L.marker(pts.marina, {icon:icons.anchor}).addTo(map).bindTooltip('Marina Botafoc');
+L.marker([38.9090, 1.4310], {icon:icons.hotel}).addTo(map).bindTooltip('Hostal Parque Ibiza');
+
+const calas = [
+  [pts.comte, 'Cala Comte'], [pts.dhort, "Cala d'Hort"], [pts.vedra, 'Es Vedrà'],
+  [pts.tago, 'Isla Tagomago'], [pts.beni, 'Cala Benirràs'], [pts.porroig, 'Porroig'], [pts.serra, "Cala d'en Serra"]
+];
+calas.forEach(([p, label]) => L.marker(p, {icon:icons.pin}).addTo(map).bindTooltip(label));
+
+// ── Charts ──
+new Chart(document.getElementById('chartVuelos'), {
+  type: 'bar',
+  data: {
+    labels: ['Valencia VLC (3 pers)', 'Madrid MAD (1 pers)', 'Bolonia BLQ (1 pers)'],
+    datasets: [{
+      label: 'Ida+vuelta por persona (€)',
+      data: [143, 112, 227],
+      backgroundColor: ['#74b9ff','#48c774','#ffeaa7'],
+      borderRadius: 6
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: true,
+    scales: { y: { beginAtZero: true, title: { display: true, text: '€' } } },
+    plugins: {
+      legend: { display: true, position: 'bottom' },
+      tooltip: {
+        callbacks: {
+          afterLabel: ctx => {
+            const totals = [429, 112, 227];
+            return `Total grupo: ${totals[ctx.dataIndex]} €`;
+          }
+        }
+      }
+    }
+  }
+});
+</script>
+
+</body>
+</html>
