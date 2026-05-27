@@ -14,8 +14,8 @@
 | **Mes** | **Septiembre 2026** |
 | **Fechas** | **31 Ago (noche tierra) + Martes 1 - Jueves 3 de Septiembre (3 días barco)** |
 | **Días de barco** | **3 días** |
-| **Coste por persona** | **~466 €** |
-| **Coste total grupo** | **~2.329 €** |
+| **Coste por persona** | **~568 €** |
+| **Coste total grupo** | **~2.840 €** |
 
 ---
 
@@ -36,8 +36,10 @@
 |----------|:-----:|
 | Velero 6 plazas (Sun Odyssey 349, Marina Botafoc) | 350 €/día |
 | 3 días de alquiler | 1.050 € |
-| Extras (seguro + combustible, ~50 €/día) | 150 € |
-| **Total barco** | **1.200 €** |
+| Seguro + tasas | 100 € |
+| Gasoil (~20 L) | 35 € |
+| Amarres (2 noches × ~30 €) | 60 € |
+| **Total barco** | **1.245 €** |
 
 ### Alojamiento (1 noche 31 Ago)
 
@@ -47,15 +49,77 @@
 | 🥈 | Aparthotel Vibra Club Maritim ⭐8.4 | 328 € | 66 € |
 | 🥉 | Hostal Sunset Ibiza ⭐7.6 | 385 € | 77 € |
 
+### Taxis y Transportes
+
+| Concepto | Quién | Coste |
+|----------|:-----:|:-----:|
+| Bus L10 aeropuerto → centro (3,50 €/pers) | VLC (3) | 10,50 € |
+| Taxi centro → San Antonio | VLC (3) | 25 € |
+| Taxi aeropuerto → San Antonio | Nereida | 20 € |
+| Taxi aeropuerto → San Antonio | Alberto | 20 € |
+| Taxi San Antonio → Marina Botafoc | 5 pers | 35 € |
+| Taxi Marina Botafoc → Aeropuerto | 5 pers | 30 € |
+| **Total transportes** | | **140,50 €** |
+
+### Comidas y Provisiones
+
+#### Lista de compra (Mercadona / supermercado)
+
+Compra única para 3 días a bordo (5 personas), adquirida Día 1 antes de zarpar:
+
+| Producto | Cant. | Precio |
+|----------|:-----:|:------:|
+| Pan de molde | 2 uds | 3,00 € |
+| Leche semidesnatada | 2 L | 1,80 € |
+| Cereales | 1 caja | 2,50 € |
+| Café soluble | 1 | 3,00 € |
+| Mermelada | 1 | 2,50 € |
+| Galletas | 1 paq | 2,00 € |
+| Fruta (plátanos + manzanas) | 1 kg | 4,00 € |
+| Embutido variado (lomo, salami) | 400 g | 8,00 € |
+| Queso semicurado | 200 g | 4,00 € |
+| Tomates cherry | 250 g | 2,00 € |
+| Atún en lata | 4 | 5,00 € |
+| Paté | 2 | 2,00 € |
+| Ensalada preparada | 3 bolsas | 6,00 € |
+| Pasta + salsa boloñesa | 2 | 4,00 € |
+| Arroz + verduras salteadas | 1 | 5,00 € |
+| Huevos | 6 | 2,00 € |
+| Frutos secos | 200 g | 5,00 € |
+| Patatas fritas | 3 bolsas | 5,00 € |
+| Chocolate/barritas energía | 4 | 4,00 € |
+| Aceitunas | 1 | 2,00 € |
+| Agua mineral (6 L) | 2 garrafas | 3,00 € |
+| Cervezas | 12 latas | 12,00 € |
+| Refrescos | 6 latas | 5,00 € |
+| Hielo | 2 bolsas | 4,00 € |
+| Sal, aceite, vinagre | 1 | 3,00 € |
+| Platos, vasos, servilletas | 1 paq | 4,00 € |
+| Bolsas de basura | 1 rollo | 1,00 € |
+| **Total provisiones** | | **~100,00 €** |
+
+#### Comidas fuera
+
+| Día | Concepto | Precio/pers | Coste total |
+|:---:|----------|:-----------:|:-----------:|
+| Día 0 | Cena San Antonio (todos) | 15 € | 75 € |
+| Día 1 | Desayuno en puerto | 5 € | 25 € |
+| Día 1 | Cena puerto / Dalt Vila | 20 € | 100 € |
+| Día 2 | Cena puerto Ibiza | 15 € | 75 € |
+| | **Total comidas fuera** | | **275 €** |
+| | **Total comidas (fuera + provisiones)** | | **~375 €** |
+
 ### Resumen (con opción más barata)
 
 | Concepto | Coste |
 |----------|:-----:|
 | Vuelos (5 personas) | 768 € |
-| Barco (3 días) | 1.200 € |
+| Barco (3 días + extras) | 1.245 € |
 | Alojamiento 31 Ago | 311 € |
-| **Total grupo** | **2.279 €** |
-| **Coste por persona** | **~456 €** |
+| Taxis y transportes | 141 € |
+| Comidas y provisiones | 375 € |
+| **Total grupo** | **~2.840 €** |
+| **Coste por persona** | **~568 €** |
 
 ---
 

@@ -16,7 +16,7 @@ Planificación de un viaje en velero sin patrón a Ibiza para 5 personas (3 Vale
   - 🥇 Apartamentos San Francisco (~311€, ⭐8.4) 
   - Aparthotel Vibra Club Maritim (~328€, ⭐8.4)
   - Hostal Sunset Ibiza (~385€, ⭐7.6)
-- **Coste:** ~466€/pers (vuelos+barco+alojamiento+extras)
+- **Coste:** ~568€/pers (vuelos+barco+alojamiento+taxis+comidas)
 
 ## Estructura del proyecto
 ```
@@ -59,6 +59,32 @@ Zonas de peligro: Bajo Caragoler, L'Esponja (S Es Vedrà), Es Freus, Baix des Ca
 | Adrián | VLC | Ryanair 31Ago 05:45 + Iberia 3Sep 22:10 | 143€ |
 | Nereida | MAD | Iberia Express 31Ago 21:45 + Ryanair 3Sep 22:40 | 112€ |
 | Alberto | BLQ | Ryanair 31Ago 20:05 + Ryanair 3Sep 23:05 | 227€ |
+
+## Costes totales recalculados (~568 €/pers)
+| Concepto | Coste | ~/pers |
+|----------|:-----:|:------:|
+| Vuelos (5 pers) | 768 € | 154 € |
+| Barco (3d + gasoil + amarres + seguro) | 1.245 € | 249 € |
+| Alojamiento 31 Ago | 311 € | 62 € |
+| Taxis/transportes | 141 € | 28 € |
+| Comidas + provisiones | 375 € | 75 € |
+| **Total grupo** | **~2.840 €** | **~568 €** |
+
+### Provisiones barco (Mercadona, ~100€ total)
+Desayunos: leche, cereales, café, pan, mermelada, galletas, fruta
+Comidas: embutido, queso, tomates, atún, paté, ensaladas, pasta, arroz, huevos
+Snacks/bebidas: frutos secos, patatas, chocolate, agua, cervezas, refrescos, hielo
+Básicos: sal/aceite/vinagre, platos/vasos, bolsas basura
+
+### Taxis confirmados
+- Bus L10 aeropuerto→centro: 3,50€/pers (VLC)
+- Taxi centro→San Antonio: 25€ (VLC 3pers)
+- Taxi aeropuerto→San Antonio: 20€ (Nereida) + 20€ (Alberto)
+- Taxi San Antonio→Marina Botafoc: 35€ (5pers)
+- Taxi Marina Botafoc→Aeropuerto: 30€ (5pers)
+
+### Fondo común recomendado: ~100€/pers
+Gasoil 35€ + amarres 60€ + provisiones 100€ + taxis compartidos 140€ = ~515€ ÷ 5
 
 ## Costes confirmados (vuelos)
 - VLC→IBZ (3 pers): Ryanair 05:45 31Ago (45€) + Iberia 22:10 3Sep (98€) = 143€/pers → 429€

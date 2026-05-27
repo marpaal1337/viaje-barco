@@ -236,6 +236,11 @@ copy barcos-actualizados.json data\barcos.json</pre>
       <option value="plazas">Plazas (menor)</option>
       <option value="plazas-desc">Plazas (mayor)</option>
       <option value="rating">Rating (mejor)</option>
+    <select id="filterPatron">
+      <option value="all">Cualquier patrón</option>
+      <option value="false">Sin patrón / Barco solo</option>
+      <option value="true">Con patrón</option>
+    </select>
     </select>
   </div>
   <div>
@@ -324,7 +329,15 @@ const TYPE_COLORS = {
   'Yate a motor': '#ff9f43',
 };
 
-function formatPrice(v) { return v.toFixed(0); }
+function formatPrice(v) { return (v || 0).toFixed(0); }
+
+function getPrecioBaja(b) { return b.precio_dia_baja != null ? b.precio_dia_baja : (b.precio_dia || 0); }
+function getPrecioAlta(b) {
+  if (b.precio_dia_alta != null) return b.precio_dia_alta;
+  if (b.precio_dia_media != null) return b.precio_dia_media;
+  return (b.precio_dia || 0);
+}
+function getUrl(b) { return b.url || (b.plataforma === 'samboat.es' && b.id ? `https://www.samboat.es/alquiler-velero/ibiza` : ''); }
 
 function formatIsla(isla) {
   const map = { 'Ibiza':'Ibiza', 'Menorca':'Menorca', 'Mallorca':'Mallorca', 'Formentera':'Formentera' };
@@ -416,13 +429,15 @@ function applyFilters() {
   const minPlazas = parseInt(document.getElementById('filterPlazas').value);
   const minEslora = parseFloat(document.getElementById('filterEslora').value);
   const maxPrice = parseInt(document.getElementById('priceMax').value);
+  const patron = document.getElementById('filterPatron').value;
 
   filtered = DATA.barcos.filter(b => {
     if (isla !== 'all' && b.isla !== isla) return false;
     if (tipo !== 'all' && b.tipo !== tipo) return false;
     if (b.plazas < minPlazas) return false;
     if (b.eslora_m < minEslora) return false;
-    if (b.precio_dia_baja > maxPrice) return false;
+    if (getPrecioBaja(b) > maxPrice) return false;
+    if (patron !== 'all' && String(b.con_patron) !== patron) return false;
     return true;
   });
 
@@ -434,8 +449,8 @@ function sortData() {
   filtered.sort((a, b) => {
     let cmp = 0;
     switch (sortField) {
-      case 'precio_dia_baja': cmp = a.precio_dia_baja - b.precio_dia_baja; break;
-      case 'precio_dia_alta': cmp = a.precio_dia_alta - b.precio_dia_alta; break;
+      case 'precio_dia_baja': cmp = getPrecioBaja(a) - getPrecioBaja(b); break;
+      case 'precio_dia_alta': cmp = getPrecioAlta(a) - getPrecioAlta(b); break;
       case 'eslora_m': cmp = a.eslora_m - b.eslora_m; break;
       case 'plazas': cmp = a.plazas - b.plazas; break;
       case 'camarotes': cmp = (a.camarotes||0) - (b.camarotes||0); break;
