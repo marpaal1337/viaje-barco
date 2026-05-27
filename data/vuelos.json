@@ -2,7 +2,8 @@
   "metadata": {
     "generado": "2026-05-27",
     "fuente": "manual",
-    "nota": "Datos de ejemplo. Ejecutar scraper_vuelos.py para actualizar con datos reales de Amadeus API."
+    "nota": "Vuelos confirmados. Ejecutar scraper_vuelos.py para actualizar con datos reales de Amadeus API.",
+    "confirmado": true
   },
   "alternativas": [
     {
@@ -397,31 +398,44 @@
       "origen_nombre": "Valencia",
       "ida_id": "vlc-ibz-ryr-20260831-0545",
       "vuelta_id": "ibz-vlc-iberia-20260903-2210",
-      "precio_total": 143.00
+      "precio_total": 143.00,
+      "confirmado": true
     },
     {
-      "persona": "Sara",
+      "persona": "Gemma",
       "origen": "VLC",
       "origen_nombre": "Valencia",
       "ida_id": "vlc-ibz-ryr-20260831-0545",
-      "vuelta_id": "ibz-vlc-ryr-20260903-1250",
-      "precio_total": 90.00
+      "vuelta_id": "ibz-vlc-iberia-20260903-2210",
+      "precio_total": 143.00,
+      "confirmado": true
     },
     {
-      "persona": "Pablo",
+      "persona": "Adrián",
+      "origen": "VLC",
+      "origen_nombre": "Valencia",
+      "ida_id": "vlc-ibz-ryr-20260831-0545",
+      "vuelta_id": "ibz-vlc-iberia-20260903-2210",
+      "precio_total": 143.00,
+      "confirmado": true
+    },
+    {
+      "persona": "Nereida",
       "origen": "MAD",
       "origen_nombre": "Madrid",
       "ida_id": "mad-ibz-ibs-20260831-2145",
       "vuelta_id": "ibz-mad-ryr-20260903-2240",
-      "precio_total": 112.00
+      "precio_total": 112.00,
+      "confirmado": true
     },
     {
-      "persona": "Marco",
+      "persona": "Alberto",
       "origen": "BLQ",
       "origen_nombre": "Bolonia",
       "ida_id": "blq-ibz-ryr-20260831-2005",
       "vuelta_id": "ibz-blq-ryr-20260903-2305",
-      "precio_total": 227.00
+      "precio_total": 227.00,
+      "confirmado": true
     }
   ]
 }
