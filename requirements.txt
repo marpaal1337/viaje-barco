@@ -1,0 +1,6 @@
+# Scraper automático (opcional, requiere Playwright)
+# playwright==1.52.0
+
+# Scraper manual (solo este)
+requests>=2.31.0
+python-dotenv>=1.0.0

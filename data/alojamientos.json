@@ -1,0 +1,41 @@
+{
+  "metadata": {
+    "generado": "2026-05-27 00:54",
+    "fuente": "plantilla",
+    "checkin": "2026-08-31",
+    "checkout": "2026-09-01",
+    "adultos": 2,
+    "niños": 0
+  },
+  "alojamientos": [
+    {
+      "id": "",
+      "nombre": "",
+      "fuente": "booking",
+      "ciudad": "Ibiza",
+      "precio_total_eur": null,
+      "url": "",
+      "puntuacion": null,
+      "puntuacion_texto": "",
+      "ubicacion": "",
+      "servicios": [],
+      "noche": "2026-08-31",
+      "noche_texto": "2026-08-31 -> 2026-09-01 (1 noche)"
+    },
+    {
+      "id": "",
+      "nombre": "",
+      "fuente": "airbnb",
+      "ciudad": "Ibiza",
+      "precio_total_eur": null,
+      "url": "",
+      "puntuacion": null,
+      "puntuacion_texto": "",
+      "ubicacion": "",
+      "servicios": [],
+      "noche": "2026-08-31",
+      "noche_texto": "2026-08-31 -> 2026-09-01 (1 noche)"
+    }
+  ],
+  "combinaciones": []
+}

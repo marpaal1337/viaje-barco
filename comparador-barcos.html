@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comparador de Barcos · Viaje Velero</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --primary: #0d2137;
+    --accent: #00b4d8;
+    --accent2: #48c774;
+    --warn: #ff9f43;
+    --bg: #f4f6f8;
+    --card: #fff;
+    --text: #2d3436;
+    --text-light: #636e72;
+    --border: #dfe6e9;
+    --radius: 14px;
+    --shadow: 0 4px 20px rgba(0,0,0,0.06);
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    padding: 20px;
+  }
+  .header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:20px; gap:12px; }
+  .header h1 { font-size:22px; color:var(--primary); }
+  .header h1 small { font-size:12px; font-weight:400; color:var(--text-light); display:block; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600; }
+  .badge-info { background:#e3f2fd; color:#1565c0; }
+  .badge-warn { background:#fff3e0; color:#e65100; }
+  .badge-green { background:#e8f5e9; color:#2e7d32; }
+  .controls { display:flex; gap:10px; flex-wrap:wrap; align-items:end; margin-bottom:20px; }
+  .controls label { font-size:11px; font-weight:600; color:var(--text-light); display:block; margin-bottom:2px; text-transform:uppercase; letter-spacing:.3px; }
+  .controls select, .controls input {
+    padding:7px 10px; border:1px solid var(--border); border-radius:8px;
+    font-size:13px; background:var(--card); color:var(--text);
+    font-family:var(--font); min-width:120px;
+  }
+  .controls select:focus, .controls input:focus { outline:none; border-color:var(--accent); }
+  .stat-row {
+    display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;
+  }
+  .stat-box {
+    background:var(--card); border-radius:10px; padding:10px 14px;
+    box-shadow:var(--shadow); flex:1; min-width:100px; text-align:center;
+    border-left:3px solid var(--accent);
+  }
+  .stat-box .val { font-size:20px; font-weight:800; color:var(--primary); }
+  .stat-box .lbl { font-size:10px; color:var(--text-light); text-transform:uppercase; letter-spacing:.3px; }
+  .stat-box.green { border-left-color:var(--accent2); }
+  .stat-box.green .val { color:#2e7d32; }
+  .stat-box.warn { border-left-color:var(--warn); }
+  .stat-box.warn .val { color:#e65100; }
+  .cards { display:flex; flex-direction:column; gap:12px; }
+  .panel { background:var(--card); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); }
+  .panel h2 { font-size:15px; color:var(--primary); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .panel h2 .count { font-size:11px; font-weight:400; color:var(--text-light); margin-left:auto; }
+
+  .boat-card {
+    border:1px solid var(--border); border-radius:10px; padding:12px 14px;
+    cursor:pointer; transition:all .15s; border-left:4px solid var(--accent);
+    display:grid; grid-template-columns:auto 1fr auto; gap:8px 14px; align-items:center;
+    margin-bottom:8px;
+  }
+  .boat-card:hover { border-color:var(--accent); background:#fafcff; transform:translateX(3px); }
+  .boat-card .boat-model { font-size:16px; font-weight:700; }
+  .boat-card .boat-model small { font-size:11px; font-weight:400; color:var(--text-light); }
+  .boat-card .boat-specs { font-size:12px; color:var(--text-light); }
+  .boat-card .boat-specs span { margin-right:12px; }
+  .boat-card .price { text-align:right; }
+  .boat-card .price .price-big { font-size:18px; font-weight:800; color:var(--primary); }
+  .boat-card .price .price-small { font-size:12px; color:var(--text-light); display:block; }
+  .boat-card .price .price-sep { font-size:12px; color:var(--warn); }
+  .tag { font-size:9px; font-weight:600; padding:1px 6px; border-radius:6px; text-transform:uppercase; letter-spacing:.2px; }
+  .tag-velero { background:#e3f2fd; color:#1565c0; }
+  .tag-catamaran { background:#f3e5f5; color:#6a1b9a; }
+  .tag-yate { background:#fff3e0; color:#e65100; }
+
+  .bar-chart-container { display:flex; flex-direction:column; gap:6px; padding:8px 0; }
+  .bar-row { display:grid; grid-template-columns:140px 1fr 70px; gap:8px; align-items:center; }
+  .bar-row .bar-label { font-size:11px; font-weight:600; color:var(--text); text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bar-row .bar-label small { font-weight:400; color:var(--text-light); display:block; font-size:10px; }
+  .bar-row .bar-track { position:relative; height:24px; background:#f0f2f5; border-radius:6px; overflow:hidden; }
+  .bar-row .bar-fill { position:absolute; top:0; left:0; height:100%; border-radius:6px; display:flex; align-items:center; padding:0 6px; font-size:10px; font-weight:700; color:#fff; transition:width .3s; }
+  .bar-row .bar-fill.alta { background:#ff9f43; z-index:1; opacity:0.5; }
+  .bar-row .bar-fill.baja { background:#00b4d8; z-index:2; }
+  .bar-row .bar-value { font-size:11px; font-weight:700; color:var(--text); text-align:right; white-space:nowrap; }
+
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  th {
+    background:var(--primary); color:#fff; padding:8px 6px;
+    text-align:left; font-weight:600; font-size:11px; white-space:nowrap;
+    cursor:pointer; user-select:none;
+  }
+  th:hover { opacity:0.9; }
+  th .sort-arrow { font-size:9px; margin-left:3px; }
+  td { padding:7px 6px; border-bottom:1px solid #f0f0f0; }
+  tr:nth-child(even) { background:#fafbfc; }
+  tr:hover { background:#eef8ff; }
+  .price-cell { font-weight:700; text-align:right; white-space:nowrap; }
+  .price-green { color:#2e7d32; }
+  .price-warn { color:#e65100; }
+
+  .btn {
+    padding:7px 12px; border:1px solid var(--border); border-radius:8px;
+    background:var(--card); color:var(--text); font-size:12px; font-weight:600;
+    cursor:pointer; font-family:var(--font); white-space:nowrap;
+    transition:all .15s;
+  }
+  .btn:hover { border-color:var(--accent); background:#eef8ff; }
+  .btn-green { background:#e8f5e9; border-color:var(--accent2); color:#2e7d32; }
+  .btn-green:hover { background:#c8e6c9; }
+  .edit-price { cursor:pointer; font-size:14px; opacity:0.5; margin-left:4px; }
+  .edit-price:hover { opacity:1; }
+  .price-input { width:70px; padding:2px 4px; border:1px solid var(--accent); border-radius:4px; font-size:12px; text-align:right; font-family:var(--font); }
+
+  .scenario-card {
+    border:1px solid var(--border); border-radius:10px; padding:12px;
+    display:grid; grid-template-columns:auto 1fr auto; gap:8px 14px; align-items:center;
+    margin-bottom:8px; transition:all .15s;
+  }
+  .scenario-card:hover { border-color:var(--accent); background:#f8f9fa; }
+  .scenario-card .scenario-rank { font-size:24px; font-weight:800; color:var(--accent2); width:36px; text-align:center; }
+  .scenario-card .scenario-rank.top1 { color:#006100; }
+  .scenario-card .scenario-rank.top2 { color:#375623; }
+  .scenario-card .scenario-rank.top3 { color:#548235; }
+  .scenario-card .scenario-detail { font-size:12px; color:var(--text); line-height:1.5; }
+  .scenario-card .scenario-price { font-size:20px; font-weight:800; }
+  .scenario-card .scenario-price.top1 { color:#006100; }
+  .scenario-card .scenario-price.top2 { color:#375623; }
+  .scenario-card .scenario-price.top3 { color:#548235; }
+
+  .chart-wrap { max-width:500px; margin:0 auto; }
+
+  @media (max-width:700px) {
+    body { padding:10px; }
+    .boat-card { grid-template-columns:1fr; gap:4px; }
+    .boat-card .price { text-align:left; }
+    .bar-row { grid-template-columns:100px 1fr 55px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>⛵ Comparador de Barcos <span class="badge badge-info">beta</span></h1>
+    <small>Viaje a Baleares · Sep 2026 · <span id="statsFuente"></span></small>
+  </div>
+  <div style="text-align:right;">
+    <div id="statsFecha" style="font-size:12px;color:var(--text-light);"></div>
+    <div id="statsTotal" style="font-size:13px;font-weight:600;"></div>
+  </div>
+</div>
+
+<div class="panel" style="margin-bottom:16px;border-left:4px solid var(--accent);">
+  <h2 style="font-size:14px;margin-bottom:8px;">📋 Workflow: <span style="font-weight:400;font-size:13px;color:var(--text-light);">1. Consulta precios → 2. Edítalos aquí → 3. Exporta y guarda</span></h2>
+  <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;">
+    <div style="font-size:12px;color:var(--text-light);line-height:1.6;">
+      <strong>Estado:</strong> <span id="statusMsg">cargando...</span><br>
+      <strong>Datos:</strong> <span id="statusCount">—</span> barcos en <code id="statusFile">data/barcos.json</code>
+      <span id="statusEdits" style="display:none;"> · <span style="color:#e65100;">✏️ edits locales</span></span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <button class="btn btn-green" onclick="exportJSON()" style="text-align:left;">💾 Exportar JSON actualizado</button>
+      <button class="btn" onclick="document.getElementById('importInput').click()" style="text-align:left;">📂 Importar JSON</button>
+      <input type="file" id="importInput" accept=".json" style="display:none" onchange="importJSON(event)">
+      <button class="btn" onclick="if(confirm('¿Eliminar edits locales?')){localStorage.removeItem('barcos_edits');location.reload();}" style="text-align:left;border-color:#ffcdd2;">🔄 Resetear edits</button>
+    </div>
+  </div>
+  <details style="margin-top:10px;font-size:12px;color:var(--text-light);">
+    <summary style="cursor:pointer;font-weight:600;">🛠️ Comandos del scraper</summary>
+    <pre style="margin-top:6px;padding:10px;background:#f4f6f8;border-radius:6px;font-size:11px;overflow-x:auto;">
+# Ver todos los enlaces a Click&Boat:
+python scraper_barcos.py --urls
+
+# Scraping automático (Playwright):
+pip install playwright && playwright install chromium
+python scraper_barcos.py --auto
+
+# Editar precios manualmente en terminal:
+python scraper_barcos.py --editar
+
+# O importa el JSON exportado desde el comparador:
+# 1. Exporta "barcos-actualizados.json" desde el botón 💾
+# 2. Cópialo sobre data/barcos.json:
+copy barcos-actualizados.json data\barcos.json</pre>
+  </details>
+</div>
+
+<div class="controls">
+  <div>
+    <label>Isla</label>
+    <select id="filterIsla"><option value="all">Todas las islas</option></select>
+  </div>
+  <div>
+    <label>Tipo</label>
+    <select id="filterTipo">
+      <option value="all">Todos los tipos</option>
+      <option value="Velero">Velero</option>
+      <option value="Catamarán">Catamarán</option>
+      <option value="Yate a motor">Yate a motor</option>
+    </select>
+  </div>
+  <div>
+    <label>Plazas mín</label>
+    <select id="filterPlazas">
+      <option value="0">Cualquiera</option>
+      <option value="6">6+</option>
+      <option value="8">8+</option>
+      <option value="10">10+</option>
+    </select>
+  </div>
+  <div>
+    <label>Eslora mín</label>
+    <select id="filterEslora">
+      <option value="0">Cualquiera</option>
+      <option value="10">10m+</option>
+      <option value="11">11m+</option>
+      <option value="12">12m+</option>
+    </select>
+  </div>
+  <div>
+    <label>Ordenar por</label>
+    <select id="filterSort">
+      <option value="precio">Precio (menor)</option>
+      <option value="precio-desc">Precio (mayor)</option>
+      <option value="eslora">Eslora (menor)</option>
+      <option value="eslora-desc">Eslora (mayor)</option>
+      <option value="plazas">Plazas (menor)</option>
+      <option value="plazas-desc">Plazas (mayor)</option>
+      <option value="rating">Rating (mejor)</option>
+    </select>
+  </div>
+  <div>
+    <label>Precio/día máx (temp. baja)</label>
+    <input type="range" id="priceMax" min="200" max="1000" value="1000" style="width:120px;">
+    <span id="priceMaxLabel" style="font-size:12px;color:var(--text-light);">1000 €</span>
+  </div>
+</div>
+
+<div class="stat-row">
+  <div class="stat-box green"><div class="val" id="statMinPrice">—</div><div class="lbl">Mín €/día (baja)</div></div>
+  <div class="stat-box"><div class="val" id="statAvgPrice">—</div><div class="lbl">Media €/día (baja)</div></div>
+  <div class="stat-box warn"><div class="val" id="statMaxPrice">—</div><div class="lbl">Máx €/día (baja)</div></div>
+  <div class="stat-box"><div class="val" id="statCount">—</div><div class="lbl">Barcos</div></div>
+  <div class="stat-box"><div class="val" id="statIslas">—</div><div class="lbl">Islas</div></div>
+</div>
+
+<div class="cards">
+
+  <!-- Comparativa de precios (barras) -->
+  <div class="panel">
+    <h2>📊 Comparativa de precios <span class="count" id="barCount"></span></h2>
+    <div id="barChart"></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--text-light);margin-top:8px;">
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:14px;height:10px;border-radius:3px;background:#00b4d8;display:inline-block;"></span> Temp. baja (Sep)</span>
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:14px;height:10px;border-radius:3px;background:#ff9f43;display:inline-block;"></span> Temp. alta (Ago)</span>
+      <span>— Precio por día en €</span>
+    </div>
+  </div>
+
+  <!-- Escenarios de grupo -->
+  <div class="panel">
+    <h2>👥 Escenarios para el grupo <span class="count" id="scenarioCount"></span></h2>
+    <div id="scenarioList"></div>
+    <div style="font-size:11px;color:var(--text-light);margin-top:8px;">
+      <strong>Grupo:</strong> 6 personas · <strong>Supuesto:</strong> 3 días de barco · <strong>Coste total</strong> = (precio/día + extras) × 3
+    </div>
+  </div>
+
+  <!-- Tabla de barcos -->
+  <div class="panel">
+    <h2>📋 Todos los barcos <span class="count" id="tableCount"></span></h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('modelo')">Modelo <span class="sort-arrow"></span></th>
+            <th onclick="sortBy('tipo')">Tipo <span class="sort-arrow"></span></th>
+            <th onclick="sortBy('isla')">Isla <span class="sort-arrow"></span></th>
+            <th onclick="sortBy('puerto_base')">Puerto <span class="sort-arrow"></span></th>
+            <th onclick="sortBy('eslora_m')">Eslora <span class="sort-arrow"></span></th>
+            <th onclick="sortBy('plazas')">Plazas <span class="sort-arrow"></span></th>
+            <th onclick="sortBy('camarotes')">Camarotes <span class="sort-arrow"></span></th>
+            <th onclick="sortBy('precio_dia_alta')">Precio Ago <span class="sort-arrow"></span></th>
+            <th onclick="sortBy('precio_dia_baja')">Precio Sep <span class="sort-arrow"></span></th>
+            <th onclick="sortBy('rating')">Rating <span class="sort-arrow"></span></th>
+            <th>✏️</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Gráfico distribución precios -->
+  <div class="panel">
+    <h2>📈 Distribución de precios (temp. baja)</h2>
+    <div class="chart-wrap">
+      <canvas id="priceChart" height="200"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Data ──
+let DATA = null;
+let filtered = [];
+let sortField = 'precio_dia_baja';
+let sortAsc = true;
+let priceChart = null;
+
+const TYPE_COLORS = {
+  'Velero': '#00b4d8',
+  'Catamarán': '#6a1b9a',
+  'Yate a motor': '#ff9f43',
+};
+
+function formatPrice(v) { return v.toFixed(0); }
+
+function formatIsla(isla) {
+  const map = { 'Ibiza':'Ibiza', 'Menorca':'Menorca', 'Mallorca':'Mallorca', 'Formentera':'Formentera' };
+  return map[isla] || isla;
+}
+
+// ── Import ──
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (imported.barcos) {
+        DATA = imported;
+        loadLocalEdits();
+        populateFilters();
+        applyFilters();
+        updateStatus();
+        document.getElementById('statusMsg').innerHTML = '✅ Datos importados de <code>' + file.name + '</code>';
+      }
+    } catch(err) {
+      alert('Error al importar JSON: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function updateStatus() {
+  if (!DATA) return;
+  const meta = DATA.metadata || {};
+  const fuente = meta.fuente || 'desconocida';
+  const gen = meta.generado || '';
+  document.getElementById('statsFuente').textContent = fuente;
+
+  const n = DATA.barcos.length;
+  const editSpan = document.getElementById('statusEdits');
+  try {
+    const edits = JSON.parse(localStorage.getItem('barcos_edits') || '{}');
+    const editCount = Object.keys(edits).length;
+    if (editCount > 0) {
+      editSpan.style.display = 'inline';
+      editSpan.innerHTML = ` · <span style="color:#e65100;">✏️ ${editCount} edits locales</span>`;
+    } else {
+      editSpan.style.display = 'none';
+    }
+  } catch(e) { editSpan.style.display = 'none'; }
+
+  document.getElementById('statusCount').textContent = n;
+  document.getElementById('statusFile').textContent = 'data/barcos.json';
+  document.getElementById('statusMsg').innerHTML = gen
+    ? `✅ Cargado · última actualización: ${gen}`
+    : '✅ Cargado';
+}
+
+// ── Load data ──
+async function loadData() {
+  try {
+    const r = await fetch('data/barcos.json');
+    DATA = await r.json();
+    loadLocalEdits();
+    updateStatus();
+    populateFilters();
+    applyFilters();
+  } catch (e) {
+    document.getElementById('tableBody').innerHTML =
+      `<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--text-light);">
+        ⚠️ No se pudo cargar <code>data/barcos.json</code>.<br>
+        Asegúrate de que el archivo existe o ejecuta <code>python scraper_barcos.py</code>.
+      </td></tr>`;
+    document.getElementById('statusMsg').textContent = '❌ No se pudo cargar data/barcos.json';
+  }
+}
+
+// ── Filters ──
+function populateFilters() {
+  const islaSel = document.getElementById('filterIsla');
+  const islas = new Set();
+  DATA.barcos.forEach(b => islas.add(b.isla));
+  islaSel.innerHTML = '<option value="all">Todas las islas</option>' +
+    [...islas].sort().map(i => `<option value="${i}">${i}</option>`).join('');
+}
+
+function applyFilters() {
+  const isla = document.getElementById('filterIsla').value;
+  const tipo = document.getElementById('filterTipo').value;
+  const minPlazas = parseInt(document.getElementById('filterPlazas').value);
+  const minEslora = parseFloat(document.getElementById('filterEslora').value);
+  const maxPrice = parseInt(document.getElementById('priceMax').value);
+
+  filtered = DATA.barcos.filter(b => {
+    if (isla !== 'all' && b.isla !== isla) return false;
+    if (tipo !== 'all' && b.tipo !== tipo) return false;
+    if (b.plazas < minPlazas) return false;
+    if (b.eslora_m < minEslora) return false;
+    if (b.precio_dia_baja > maxPrice) return false;
+    return true;
+  });
+
+  sortData();
+  updateUI();
+}
+
+function sortData() {
+  filtered.sort((a, b) => {
+    let cmp = 0;
+    switch (sortField) {
+      case 'precio_dia_baja': cmp = a.precio_dia_baja - b.precio_dia_baja; break;
+      case 'precio_dia_alta': cmp = a.precio_dia_alta - b.precio_dia_alta; break;
+      case 'eslora_m': cmp = a.eslora_m - b.eslora_m; break;
+      case 'plazas': cmp = a.plazas - b.plazas; break;
+      case 'camarotes': cmp = (a.camarotes||0) - (b.camarotes||0); break;
+      case 'rating': cmp = (b.rating||0) - (a.rating||0); break;
+      case 'modelo': cmp = a.modelo.localeCompare(b.modelo); break;
+      case 'tipo': cmp = a.tipo.localeCompare(b.tipo); break;
+      case 'isla': cmp = a.isla.localeCompare(b.isla); break;
+      case 'puerto_base': cmp = (a.puerto_base||'').localeCompare(b.puerto_base||''); break;
+    }
+    return sortAsc ? cmp : -cmp;
+  });
+}
+
+let sortHistory = [];
+
+function sortBy(field) {
+  if (sortHistory.length && sortHistory[sortHistory.length-1] === field) {
+    sortAsc = !sortAsc;
+  } else {
+    sortField = field;
+    sortAsc = true;
+    sortHistory.push(field);
+    if (sortHistory.length > 3) sortHistory.shift();
+  }
+  sortData();
+  renderTable();
+  renderBarChart();
+}
+
+// ── Stats ──
+function updateStats() {
+  if (filtered.length === 0) {
+    ['statMinPrice','statAvgPrice','statMaxPrice','statCount','statIslas'].forEach(id => {
+      document.getElementById(id).textContent = '—';
+    });
+    return;
+  }
+  const prices = filtered.map(b => b.precio_dia_baja);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const avg = prices.reduce((s, p) => s + p, 0) / prices.length;
+  const islas = new Set(filtered.map(b => b.isla));
+
+  document.getElementById('statMinPrice').textContent = `${formatPrice(min)} €`;
+  document.getElementById('statMaxPrice').textContent = `${formatPrice(max)} €`;
+  document.getElementById('statAvgPrice').textContent = `${formatPrice(avg)} €`;
+  document.getElementById('statCount').textContent = filtered.length;
+  document.getElementById('statIslas').textContent = [...islas].join(', ');
+
+  document.getElementById('statsTotal').textContent = `${filtered.length} barcos`;
+  document.getElementById('barCount').textContent = `(${filtered.length} barcos)`;
+  document.getElementById('tableCount').textContent = `(${filtered.length} barcos)`;
+}
+
+// ── Bar chart (comparativa precios) ──
+function renderBarChart() {
+  const container = document.getElementById('barChart');
+  if (filtered.length === 0) {
+    container.innerHTML = '<div style="text-align:center;color:var(--text-light);padding:20px;font-size:13px;">Sin barcos para mostrar</div>';
+    return;
+  }
+
+  const maxPrice = Math.max(...filtered.map(b => b.precio_dia_alta), 1);
+  // Sort filtered for display
+  const sorted = [...filtered].sort((a, b) => a.precio_dia_baja - b.precio_dia_baja);
+
+  container.innerHTML = '<div class="bar-chart-container">' +
+    sorted.map(b => {
+      const wBaja = (b.precio_dia_baja / maxPrice) * 100;
+      const wAlta = (b.precio_dia_alta / maxPrice) * 100;
+      return `<div class="bar-row">
+        <div class="bar-label">${b.modelo} <small>${b.isla} · ${b.plazas} pax</small></div>
+        <div class="bar-track">
+          <div class="bar-fill alta" style="width:${wAlta}%;" title="Agosto: ${b.precio_dia_alta} €/día">${b.precio_dia_alta}€</div>
+          <div class="bar-fill baja" style="width:${wBaja}%;" title="Septiembre: ${b.precio_dia_baja} €/día">${b.precio_dia_baja}€</div>
+        </div>
+        <div class="bar-value">${b.precio_dia_baja}€</div>
+      </div>`;
+    }).join('') + '</div>';
+}
+
+// ── Scenarios ──
+function renderScenarios() {
+  const container = document.getElementById('scenarioList');
+  if (filtered.length === 0) {
+    container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-light);font-size:13px;">Selecciona barcos para ver escenarios</div>';
+    document.getElementById('scenarioCount').textContent = '(0)';
+    return;
+  }
+
+  const EXTRAS_DEFAULT = 50;
+  const DIAS = 3;
+  const PERSONAS = 6;
+
+  const scenarios = filtered.map((b, i) => {
+    const extras = parseFloat(String(b.extras_dia || '0').match(/([\d.]+)/)?.[1] || EXTRAS_DEFAULT);
+    const costeBarco = (b.precio_dia_baja + extras) * DIAS;
+    const porPersona = Math.round(costeBarco / PERSONAS);
+    return { ...b, costeBarco, porPersona, extras, idx: i };
+  });
+
+  scenarios.sort((a, b) => a.porPersona - b.porPersona);
+  document.getElementById('scenarioCount').textContent = `(${scenarios.length} escenarios)`;
+
+  container.innerHTML = scenarios.map((s, rank) => {
+    const rankClass = rank === 0 ? 'top1' : rank === 1 ? 'top2' : rank === 2 ? 'top3' : '';
+    const tipoTag = s.tipo === 'Catamarán' ? 'tag-catamaran' : s.tipo === 'Yate a motor' ? 'tag-yate' : 'tag-velero';
+    const priceClass = rankClass;
+    return `<div class="scenario-card">
+      <div class="scenario-rank ${rankClass}">#${rank + 1}</div>
+      <div class="scenario-detail">
+        <strong>${s.modelo}</strong> <span class="tag ${tipoTag}">${s.tipo}</span>
+        <span style="color:var(--text-light);">·</span> ${s.isla} <span style="color:var(--text-light);">·</span> ${s.puerto_base || '?'}
+        <br>
+        <span style="color:var(--text-light);font-size:11px;">
+          ${s.eslora_m}m · ${s.plazas} plazas · ${s.camarotes || '?'} camarotes
+          <span style="margin-left:8px;">💰 ${s.precio_dia_baja}€/día + ${s.extras}€ extras</span>
+        </span>
+      </div>
+      <div class="scenario-price ${priceClass}">${s.porPersona}€ <small style="font-size:11px;font-weight:400;color:var(--text-light);display:block;">/pers</small></div>
+    </div>`;
+  }).join('');
+}
+
+// ── Table ──
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--text-light);">No hay barcos que coincidan con los filtros</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(b => {
+    const priceClass = b.precio_dia_baja <= 350 ? 'price-green' : b.precio_dia_baja >= 500 ? 'price-warn' : '';
+    const tipoTag = b.tipo === 'Catamarán' ? 'tag-catamaran' : b.tipo === 'Yate a motor' ? 'tag-yate' : 'tag-velero';
+    return `<tr>
+      <td><strong>${b.modelo}</strong></td>
+      <td><span class="tag ${tipoTag}">${b.tipo}</span></td>
+      <td>${formatIsla(b.isla)}</td>
+      <td>${b.puerto_base || '—'}</td>
+      <td>${b.eslora_m}m</td>
+      <td>${b.plazas}</td>
+      <td>${b.camarotes || '—'}</td>
+      <td class="price-cell price-warn">${b.precio_dia_alta} <small>€</small></td>
+      <td class="price-cell ${priceClass}" id="price-${b.id}">
+        ${b.precio_dia_baja} <small>€</small>
+        <span class="edit-price" onclick="event.stopPropagation();editPrice('${b.id}')" title="Editar precio">✏️</span>
+      </td>
+      <td>${b.rating ? '⭐ '.repeat(Math.round(b.rating)) : '—'}</td>
+      <td style="text-align:center;">
+        ${b.url ? `<a href="${b.url}" target="_blank" style="text-decoration:none;font-size:16px;" title="Abrir en ${b.plataforma}">🔗</a>` : '—'}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Chart ──
+function renderChart() {
+  if (filtered.length === 0) return;
+
+  const prices = filtered.map(b => b.precio_dia_baja);
+  const min = Math.floor(Math.min(...prices) / 50) * 50;
+  const max = Math.ceil(Math.max(...prices) / 50) * 50;
+  const step = Math.max(25, Math.ceil((max - min) / 8));
+  const buckets = {};
+  for (let b = min; b <= max; b += step) {
+    buckets[`${b}-${b+step}`] = 0;
+  }
+  prices.forEach(p => {
+    const bucket = Math.floor((p - min) / step) * step + min;
+    const key = `${bucket}-${bucket+step}`;
+    if (buckets[key] !== undefined) buckets[key]++;
+  });
+
+  const ctx = document.getElementById('priceChart').getContext('2d');
+  if (priceChart) priceChart.destroy();
+
+  priceChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(buckets).map(k => `${k.split('-')[0]}€`),
+      datasets: [{
+        label: 'Barcos',
+        data: Object.values(buckets),
+        backgroundColor: '#00b4d8',
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 }, title: { display: true, text: 'Nº barcos' } },
+        x: { title: { display: true, text: '€/día (temp. baja)' } }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+// ── Edit price ──
+function editPrice(id) {
+  const b = DATA.barcos.find(x => x.id === id);
+  if (!b) return;
+  const current = b.precio_dia_baja;
+  const cell = document.getElementById(`price-${id}`);
+  cell.innerHTML = `<input type="number" class="price-input" value="${current}" step="1" min="0" id="input-${id}" onblur="savePrice('${id}')" onkeydown="if(event.key==='Enter')savePrice('${id}');if(event.key==='Escape')cancelEdit('${id}','${current}')">`;
+  document.getElementById(`input-${id}`).focus();
+}
+
+function savePrice(id) {
+  const input = document.getElementById(`input-${id}`);
+  if (!input) return;
+  const val = parseFloat(input.value);
+  if (isNaN(val) || val < 0) return cancelEdit(id, DATA.barcos.find(b => b.id === id)?.precio_dia_baja || 0);
+  const b = DATA.barcos.find(x => x.id === id);
+  if (!b) return;
+  b.precio_dia_baja = val;
+  saveLocalEdits();
+  applyFilters();
+}
+
+function cancelEdit(id, original) {
+  const b = DATA.barcos.find(x => x.id === id);
+  if (b) b.precio_dia_baja = original;
+  applyFilters();
+}
+
+function saveLocalEdits() {
+  const edits = {};
+  DATA.barcos.forEach(b => { edits[b.id] = b.precio_dia_baja; });
+  try { localStorage.setItem('barcos_edits', JSON.stringify(edits)); } catch(e) {}
+}
+
+function loadLocalEdits() {
+  try {
+    const raw = localStorage.getItem('barcos_edits');
+    if (!raw) return;
+    const edits = JSON.parse(raw);
+    DATA.barcos.forEach(b => {
+      if (edits[b.id] !== undefined) b.precio_dia_baja = edits[b.id];
+    });
+  } catch(e) {}
+}
+
+// ── Export JSON ──
+function exportJSON() {
+  const meta = DATA.metadata || {};
+  meta.generado = new Date().toISOString().slice(0, 16).replace('T', ' ');
+  meta.fuente = 'comparador-barcos.html (edicion manual)';
+  DATA.metadata = meta;
+
+  const blob = new Blob([JSON.stringify(DATA, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'barcos-actualizados.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Update all ──
+function updateUI() {
+  updateStats();
+  renderTable();
+  renderBarChart();
+  renderScenarios();
+  renderChart();
+}
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadData();
+
+  document.getElementById('filterIsla').addEventListener('change', applyFilters);
+  document.getElementById('filterTipo').addEventListener('change', applyFilters);
+  document.getElementById('filterPlazas').addEventListener('change', applyFilters);
+  document.getElementById('filterEslora').addEventListener('change', applyFilters);
+  document.getElementById('filterSort').addEventListener('change', function() {
+    const v = this.value;
+    sortField = v.replace('-desc', '');
+    sortAsc = !v.includes('-desc');
+    applyFilters();
+  });
+  document.getElementById('priceMax').addEventListener('input', function() {
+    document.getElementById('priceMaxLabel').textContent = `${this.value} €`;
+    applyFilters();
+  });
+
+  if (DATA) {
+    populateFilters();
+    applyFilters();
+  }
+});
+</script>
+</body>
+</html>
