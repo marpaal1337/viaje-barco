@@ -1,16 +1,42 @@
 {
   "metadata": {
-    "generado": "2026-05-27 19:52",
-    "fuente": "scraper_barcos_samboat.py (Playwright - SamBoat)",
+    "generado": "2026-05-28 10:00",
+    "fuente": "scraper_barcos_samboat.py (Playwright - SamBoat) + Click&Boat",
     "fechas_referencia": "1-3 Sep 2026",
     "resumen": {
-      "total_veleros": 105,
-      "sin_patron": 39,
+      "total_veleros": 106,
+      "sin_patron": 40,
       "con_patron": 66,
       "sin_info": 0
     }
   },
   "barcos": [
+    {
+      "modelo": "Dufour 43",
+      "precio_dia": 417.0,
+      "precio_dia_baja": 417.0,
+      "precio_dia_alta": 417.0,
+      "moneda": "EUR",
+      "plataforma": "clickandboat.com",
+      "url": "https://www.clickandboat.com/es/alquiler-barcos/ibiza/velero/dufour-43-bp1q8q",
+      "isla": "Ibiza",
+      "tipo": "Velero",
+      "con_patron": false,
+      "plazas": 11,
+      "camarotes": 4,
+      "eslora_m": 14.0,
+      "ano": 2006,
+      "rating": 4.4,
+      "reseñas": 13,
+      "puerto_base": "Marina Ibiza",
+      "disponibilidad": "1-3 Sep 2026 - CONFIRMADO",
+      "licencia": "Sin licencia requerida",
+      "fianza": "1000 EUR",
+      "id": "ibiza-dufour43-cb",
+      "extras_dia": "Gasoil aparte",
+      "seguro": "Incluido",
+      "nota": "Oferta 1.250€ 3 días. Check-in 10:00, check-out 18:00. Propietario: Toni. Reacondicionado 2017."
+    },
     {
       "modelo": "Bavaria 35",
       "precio_dia": 120.0,
