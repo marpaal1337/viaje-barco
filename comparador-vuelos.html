@@ -5,311 +5,59 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Comparador de Vuelos · Viaje Velero</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="css/shared.css">
 <style>
-  :root {
-    --primary: #0d2137;
-    --accent: #00b4d8;
-    --accent2: #48c774;
-    --warn: #ff9f43;
-    --bg: #f4f6f8;
-    --card: #fff;
-    --text: #2d3436;
-    --text-light: #636e72;
-    --border: #dfe6e9;
-    --radius: 14px;
-    --shadow: 0 4px 20px rgba(0,0,0,0.06);
-    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body {
-    font-family: var(--font);
-    background: var(--bg);
-    color: var(--text);
-    padding: 20px;
-  }
-
-  .header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:20px; gap:12px; }
-  .header h1 { font-size:22px; color:var(--primary); }
-  .header h1 small { font-size:12px; font-weight:400; color:var(--text-light); display:block; }
-
-  .badge { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600; }
-  .badge-info { background:#e3f2fd; color:#1565c0; }
-  .badge-warn { background:#fff3e0; color:#e65100; }
-  .badge-green { background:#e8f5e9; color:#2e7d32; }
-
-  .controls { display:flex; gap:10px; flex-wrap:wrap; align-items:end; margin-bottom:20px; }
-  .controls label { font-size:11px; font-weight:600; color:var(--text-light); display:block; margin-bottom:2px; text-transform:uppercase; letter-spacing:.3px; }
-  .controls select, .controls input {
-    padding:7px 10px; border:1px solid var(--border); border-radius:8px;
-    font-size:13px; background:var(--card); color:var(--text);
-    font-family:var(--font); min-width:120px;
-  }
-  .controls select:focus, .controls input:focus { outline:none; border-color:var(--accent); }
-  .stat-row {
-    display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;
-  }
-  .stat-box {
-    background:var(--card); border-radius:10px; padding:10px 14px;
-    box-shadow:var(--shadow); flex:1; min-width:100px; text-align:center;
-    border-left:3px solid var(--accent);
-  }
-  .stat-box .val { font-size:20px; font-weight:800; color:var(--primary); }
-  .stat-box .lbl { font-size:10px; color:var(--text-light); text-transform:uppercase; letter-spacing:.3px; }
-  .stat-box.green { border-left-color:var(--accent2); }
-  .stat-box.green .val { color:#2e7d32; }
-  .stat-box.warn { border-left-color:var(--warn); }
-  .stat-box.warn .val { color:#e65100; }
-
-  .cards { display:flex; flex-direction:column; gap:12px; }
-
-  .panel { background:var(--card); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); }
-  .panel h2 { font-size:15px; color:var(--primary); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
-  .panel h2 .count { font-size:11px; font-weight:400; color:var(--text-light); margin-left:auto; }
-
-  .flight-card {
-    border:1px solid var(--border); border-radius:10px; padding:12px 14px;
-    cursor:pointer; transition:all .15s; border-left:4px solid var(--accent);
-    display:grid; grid-template-columns:auto 1fr auto; gap:8px 14px; align-items:center;
-    margin-bottom:8px;
-  }
-  .flight-card:hover { border-color:var(--accent); background:#fafcff; transform:translateX(3px); }
-  .flight-card.selected { border-color:var(--accent2); background:#f0fdf4; border-left-width:6px; }
-  .flight-card .time-group { display:flex; align-items:center; gap:6px; }
-  .flight-card .time-group .big-time { font-size:18px; font-weight:700; font-variant-numeric:tabular-nums; }
-  .flight-card .time-group .arrow { color:var(--text-light); font-size:14px; }
-  .flight-card .time-group .duration { font-size:11px; color:var(--text-light); }
-  .flight-card .route-info { font-size:13px; }
-  .flight-card .route-info .airline { font-weight:600; }
-  .flight-card .route-info .flight-no { font-size:11px; color:var(--text-light); }
-  .flight-card .route-info .origin-dest { color:var(--text-light); }
-  .flight-card .price { font-size:18px; font-weight:800; color:var(--primary); text-align:right; }
-  .flight-card .price small { font-size:11px; font-weight:400; color:var(--text-light); }
-  .flight-card .tags { grid-column:2; display:flex; gap:4px; flex-wrap:wrap; }
-  .tag { font-size:9px; font-weight:600; padding:1px 6px; border-radius:6px; text-transform:uppercase; letter-spacing:.2px; }
-  .tag-direct { background:#e8f5e9; color:#2e7d32; }
-  .tag-1stop { background:#fff3e0; color:#e65100; }
-
-  .comparison-bar {
-    display:flex; gap:8px; align-items:center;
-    padding:10px 14px; background:#f0fdf4; border-radius:10px;
-    border:1px solid var(--accent2); margin-bottom:12px;
-    font-size:13px;
-  }
-  .comparison-bar .clear-btn {
-    margin-left:auto; background:none; border:none; color:#e74c3c;
-    cursor:pointer; font-size:12px; font-weight:600;
-  }
-
-  .timeline-container {
-    position:relative; padding:16px 0 4px; overflow-x:auto; margin-bottom:16px;
-    background:#fafbfc; border-radius:10px; border:1px solid var(--border);
-  }
-  .timeline-axis {
-    position:relative; height:28px; border-bottom:1px solid var(--border);
-    margin:0 10px 0 80px; min-width:800px;
-  }
-  .timeline-axis .tick {
-    position:absolute; top:0; transform:translateX(-50%);
-    font-size:9px; font-weight:600; color:var(--text-light);
-  }
-  .timeline-axis .tick::before {
-    content:''; position:absolute; top:14px; left:50%;
-    width:1px; height:8px; background:var(--border);
-  }
-  .timeline-axis .tick.major::before { height:12px; background:#b0b0b0; }
-  .timeline-axis .tick.major { font-weight:700; color:var(--text); }
-  .timeline-track {
-    position:relative; margin:0 10px 0 80px; min-height:50px; min-width:800px;
-  }
-  .tl-group { margin-bottom:4px; }
-  .tl-group-header {
-    font-size:11px; font-weight:700; color:var(--primary);
-    padding:4px 0 2px 4px; margin:0 -10px 0 -80px;
-    background:#f0f2f5; border-radius:4px;
-    display:flex; gap:8px; align-items:center;
-  }
-  .tl-group-header .tl-route-count {
-    font-size:9px; font-weight:400; color:var(--text-light); margin-left:auto;
-  }
-  .tl-group-body { position:relative; height:38px; }
-  .tl-flight {
-    position:absolute; height:30px; border-radius:8px;
-    display:flex; align-items:center; padding:0 6px;
-    font-size:10px; font-weight:600; color:#fff;
-    cursor:pointer; transition:all .15s; white-space:nowrap;
-    min-width:16px; box-shadow:0 1px 4px rgba(0,0,0,0.15);
-    top:4px; z-index:2;
-  }
-  .tl-flight:hover {
-    transform:translateY(-2px); box-shadow:0 3px 10px rgba(0,0,0,0.25);
-    z-index:10;
-  }
-  .tl-flight.selected {
-    box-shadow:0 0 0 2px #fff, 0 0 0 4px var(--accent2);
-    z-index:5;
-  }
-  .tl-flight .tl-time-badge {
-    background:rgba(0,0,0,0.25); padding:0 4px; border-radius:3px;
-    font-size:9px; font-weight:700; margin-right:4px;
-  }
-  .tl-flight .tl-price-badge {
-    margin-left:auto; background:rgba(0,0,0,0.3);
-    padding:0 5px; border-radius:4px; font-size:10px; font-weight:800;
-  }
-  .tl-flight .tl-airline-label {
-    font-size:9px; opacity:0.9; margin:0 4px; overflow:hidden; text-overflow:ellipsis;
-  }
-  .tl-flight .tl-duration {
-    font-size:8px; opacity:0.7; margin-left:4px;
-  }
-  .tl-bg-grid {
-    position:absolute; top:0; left:0; right:0; bottom:0; pointer-events:none;
-    z-index:0;
-  }
-  .tl-bg-grid .hour-line {
-    position:absolute; top:0; bottom:0; width:1px;
-    background:rgba(0,0,0,0.04);
-  }
-  .tl-tooltip {
-    position:fixed; padding:8px 10px; border-radius:8px;
-    background:#1a1a2e; color:#fff; font-size:11px; line-height:1.5;
-    pointer-events:none; z-index:1000; box-shadow:0 4px 16px rgba(0,0,0,0.3);
-    max-width:220px; display:none;
-  }
-  .tl-tooltip .tt-row { display:flex; justify-content:space-between; gap:12px; }
-  .btn {
-    padding:7px 12px; border:1px solid var(--border); border-radius:8px;
-    background:var(--card); color:var(--text); font-size:12px; font-weight:600;
-    cursor:pointer; font-family:var(--font); white-space:nowrap;
-    transition:all .15s;
-  }
-  .btn:hover { border-color:var(--accent); background:#eef8ff; }
-  .btn-green { background:#e8f5e9; border-color:var(--accent2); color:#2e7d32; }
-  .btn-green:hover { background:#c8e6c9; }
-  .edit-price { cursor:pointer; font-size:14px; opacity:0.5; margin-left:4px; }
-  .edit-price:hover { opacity:1; }
-  .price-input { width:70px; padding:2px 4px; border:1px solid var(--accent); border-radius:4px; font-size:12px; text-align:right; font-family:var(--font); }
-  .price-input:focus { outline:none; border-color:var(--primary); }
-
-  .table-wrap { overflow-x:auto; }
-  table { width:100%; border-collapse:collapse; font-size:12px; }
-  th {
-    background:var(--primary); color:#fff; padding:8px 6px;
-    text-align:left; font-weight:600; font-size:11px; white-space:nowrap;
-    cursor:pointer; user-select:none;
-  }
-  th:hover { opacity:0.9; }
-  th .sort-arrow { font-size:9px; margin-left:3px; }
-  td { padding:7px 6px; border-bottom:1px solid #f0f0f0; }
-  tr:nth-child(even) { background:#fafbfc; }
-  tr:hover { background:#eef8ff; }
-  tr.selected-row { background:#e8f5e9 !important; font-weight:600; }
-  .price-cell { font-weight:700; text-align:right; white-space:nowrap; }
-  .price-green { color:#2e7d32; }
-  .price-warn { color:#e65100; }
-
-  .combo-card {
-    border:1px solid var(--border); border-radius:10px; padding:12px;
-    display:flex; align-items:center; gap:12px;
-    margin-bottom:8px; transition:all .15s;
-  }
-  .combo-card:hover { border-color:var(--accent); background:#f8f9fa; }
-  .combo-card .combo-price { font-size:20px; font-weight:800; color:#2e7d32; }
-  .combo-card .combo-detail { font-size:12px; color:var(--text-light); flex:1; }
-
-  .chart-wrap { max-width:500px; margin:0 auto; }
-
-  @media (max-width:700px) {
-    body { padding:10px; }
-    .flight-card { grid-template-columns:1fr; gap:4px; }
-    .flight-card .price { text-align:left; }
-    .timeline-axis, .timeline-track { margin:0 10px; }
-    .tl-row-label { display:none; }
-  }
+  .header { align-items:center; margin-bottom:20px; }
 </style>
 </head>
 <body>
+
+<nav class="navbar">
+  <a class="nav-brand" href="plan-viaje-ibiza.html">⛵ Viaje Velero</a>
+  <div class="nav-links">
+    <a href="plan-viaje-ibiza.html" class="nav-link">Plan</a>
+    <a href="comparador-barcos.html" class="nav-link">Barcos</a>
+    <a href="comparador-vuelos.html" class="nav-link active">Vuelos</a>
+    <a href="comparador-alojamientos.html" class="nav-link">Alojamientos</a>
+    <a href="comparador-viaje.html" class="nav-link">Comparador</a>
+  </div>
+</nav>
 
 <div class="header">
   <div>
     <h1>✈️ Comparador de Vuelos <span class="badge badge-info">beta</span></h1>
     <small>Viaje a Baleares · Sep 2026 · <span id="statsFuente"></span></small>
   </div>
-  <div style="text-align:right;">
-    <div id="statsFecha" style="font-size:12px;color:var(--text-light);"></div>
+  <div class="header-right">
+    <div id="statsFecha" class="small-label"></div>
     <div id="statsTotal" style="font-size:13px;font-weight:600;"></div>
   </div>
 </div>
 
-<!-- Panel de Workflow integrado -->
-<div class="panel" style="margin-bottom:16px;border-left:4px solid var(--accent);">
-  <h2 style="font-size:14px;margin-bottom:8px;">📋 Workflow: <span style="font-weight:400;font-size:13px;color:var(--text-light);">1. Consulta precios → 2. Edítalos aquí → 3. Exporta y guarda</span></h2>
-  <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;">
-    <div style="font-size:12px;color:var(--text-light);line-height:1.6;">
-      <strong>Estado:</strong> <span id="statusMsg">cargando...</span><br>
-      <strong>Datos:</strong> <span id="statusCount">—</span> vuelos en <code id="statusFile">data/vuelos.json</code>
+<div class="panel wf-bar">
+  <h2>📋 Workflow: <span>1. Consulta precios → 2. Edítalos aquí → 3. Exporta y guarda</span></h2>
+  <div class="wf-grid">
+    <div class="wf-status">
+      <strong>Estado:</strong> <span class="wf-msg" id="statusMsg">cargando...</span><br>
+      <strong>Datos:</strong> <span id="statusCount">—</span> vuelos en <code>data/vuelos.json</code>
       <span id="statusEdits" style="display:none;"> · <span style="color:#e65100;">✏️ edits locales</span></span>
     </div>
     <div style="display:flex;flex-direction:column;gap:6px;">
-      <button class="btn" onclick="openGoogleFlights()" style="text-align:left;">🔗 Google Flights (ruta actual)</button>
-      <button class="btn btn-green" onclick="exportJSON()" style="text-align:left;">💾 Exportar JSON actualizado</button>
-      <button class="btn" onclick="document.getElementById('importInput').click()" style="text-align:left;">📂 Importar JSON</button>
+      <button class="btn" onclick="openGoogleFlights()">🔗 Google Flights</button>
+      <button class="btn btn-green" onclick="exportJSON()">💾 Exportar JSON</button>
+      <button class="btn" onclick="document.getElementById('importInput').click()">📂 Importar JSON</button>
       <input type="file" id="importInput" accept=".json" style="display:none" onchange="importJSON(event)">
-      <button class="btn" onclick="if(confirm('¿Eliminar edits locales?')){localStorage.removeItem('vuelos_edits');location.reload();}" style="text-align:left;border-color:#ffcdd2;">🔄 Resetear edits</button>
+      <button class="btn btn-danger" onclick="if(confirm('¿Eliminar edits locales?')){localStorage.removeItem('vuelos_edits');location.reload();}">🔄 Resetear</button>
     </div>
   </div>
-  <details style="margin-top:10px;font-size:12px;color:var(--text-light);">
-    <summary style="cursor:pointer;font-weight:600;">🛠️ Comandos del scraper</summary>
-    <pre style="margin-top:6px;padding:10px;background:#f4f6f8;border-radius:6px;font-size:11px;overflow-x:auto;">
-# Ver todos los enlaces a Google Flights:
-python scraper_vuelos.py --urls
-
-# Scraping automático (Playwright):
-pip install playwright && playwright install chromium
-python scraper_vuelos.py --auto
-
-# Editar precios manualmente en terminal:
-python scraper_vuelos.py --editar
-
-# O importa el JSON exportado desde el comparador:
-# 1. Exporta "vuelos-actualizados.json" desde el botón 💾
-# 2. Cópialo sobre data/vuelos.json:
-copy vuelos-actualizados.json data\vuelos.json</pre>
-  </details>
 </div>
 
 <div class="controls">
-  <div>
-    <label>Ruta</label>
-    <select id="filterRuta"><option value="all">Todas las rutas</option></select>
-  </div>
-  <div>
-    <label>Fecha</label>
-    <select id="filterFecha"><option value="all">Todas las fechas</option></select>
-  </div>
-  <div>
-    <label>Tipo</label>
-    <select id="filterTipo">
-      <option value="all">Ida + Vuelta</option>
-      <option value="ida">Solo ida</option>
-      <option value="vuelta">Solo vuelta</option>
-    </select>
-  </div>
-  <div>
-    <label>Ordenar por</label>
-    <select id="filterSort">
-      <option value="precio">Precio (menor)</option>
-      <option value="precio-desc">Precio (mayor)</option>
-      <option value="salida">Salida (más temprano)</option>
-      <option value="salida-desc">Salida (más tarde)</option>
-      <option value="duracion">Duración (menor)</option>
-    </select>
-  </div>
-  <div>
-    <label>Precio máx</label>
-    <input type="range" id="priceMax" min="20" max="250" value="250" style="width:120px;">
-    <span id="priceMaxLabel" style="font-size:12px;color:var(--text-light);">250 €</span>
-  </div>
+  <div><label>Ruta</label><select id="filterRuta"><option value="all">Todas las rutas</option></select></div>
+  <div><label>Fecha</label><select id="filterFecha"><option value="all">Todas las fechas</option></select></div>
+  <div><label>Tipo</label><select id="filterTipo"><option value="all">Ida + Vuelta</option><option value="ida">Solo ida</option><option value="vuelta">Solo vuelta</option></select></div>
+  <div><label>Ordenar</label><select id="filterSort"><option value="precio">Precio (menor)</option><option value="precio-desc">Precio (mayor)</option><option value="salida">Salida (más temprano)</option><option value="salida-desc">Salida (más tarde)</option><option value="duracion">Duración (menor)</option></select></div>
+  <div><label>Precio máx</label><input type="range" id="priceMax" min="20" max="250" value="250" style="width:120px;"><span id="priceMaxLabel" style="font-size:12px;color:var(--text-light);">250 €</span></div>
 </div>
 
 <div class="comparison-bar" id="comparisonBar" style="display:none;">
@@ -322,746 +70,59 @@ copy vuelos-actualizados.json data\vuelos.json</pre>
   <div class="stat-box green"><div class="val" id="statMinPrice">—</div><div class="lbl">Más barato</div></div>
   <div class="stat-box"><div class="val" id="statAvgPrice">—</div><div class="lbl">Precio medio</div></div>
   <div class="stat-box warn"><div class="val" id="statMaxPrice">—</div><div class="lbl">Más caro</div></div>
-  <div class="stat-box"><div class="val" id="statCount">—</div><div class="lbl">Vuelos encontrados</div></div>
+  <div class="stat-box"><div class="val" id="statCount">—</div><div class="lbl">Vuelos</div></div>
   <div class="stat-box"><div class="val" id="statAirlines">—</div><div class="lbl">Aerolíneas</div></div>
 </div>
 
 <div class="cards">
-
-  <!-- Timeline -->
   <div class="panel">
-    <h2>📊 Timeline de vuelos <span class="count" id="timelineCount"></span></h2>
+    <h2>📊 Timeline <span class="count" id="timelineCount"></span></h2>
     <div class="timeline-container" id="timelineContainer">
       <div class="timeline-axis" id="timelineAxis"></div>
       <div class="timeline-track" id="timelineTrack"></div>
     </div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--text-light);">
-      <span style="display:flex;align-items:center;gap:4px;"><span style="width:14px;height:10px;border-radius:3px;background:#1565c0;display:inline-block;"></span> Ryanair</span>
-      <span style="display:flex;align-items:center;gap:4px;"><span style="width:14px;height:10px;border-radius:3px;background:#e65100;display:inline-block;"></span> Iberia Express</span>
-      <span style="display:flex;align-items:center;gap:4px;"><span style="width:14px;height:10px;border-radius:3px;background:#6a1b9a;display:inline-block;"></span> Iberia</span>
-      <span style="display:flex;align-items:center;gap:4px;"><span style="width:14px;height:10px;border-radius:3px;background:#00838f;display:inline-block;"></span> Vueling</span>
-      <span>— Longitud de barra = duración del vuelo</span>
+      <span><span style="width:14px;height:10px;border-radius:3px;background:#1565c0;display:inline-block;"></span> Ryanair</span>
+      <span><span style="width:14px;height:10px;border-radius:3px;background:#e65100;display:inline-block;"></span> Iberia Express</span>
+      <span><span style="width:14px;height:10px;border-radius:3px;background:#6a1b9a;display:inline-block;"></span> Iberia</span>
+      <span><span style="width:14px;height:10px;border-radius:3px;background:#00838f;display:inline-block;"></span> Vueling</span>
     </div>
   </div>
-
-  <!-- Combinaciones Ida+Vuelta -->
   <div class="panel">
-    <h2>🔄 Combinaciones ida + vuelta <span class="count" id="comboCount"></span></h2>
+    <h2>🔄 Combinaciones <span class="count" id="comboCount"></span></h2>
     <div id="comboList"></div>
   </div>
-
-  <!-- Tabla de vuelos -->
   <div class="panel">
     <h2>📋 Todos los vuelos <span class="count" id="tableCount"></span></h2>
     <div class="table-wrap">
       <table>
-        <thead>
-          <tr>
-            <th onclick="sortBy('aerolinea')">Aerolínea <span class="sort-arrow"></span></th>
-            <th onclick="sortBy('ruta')">Ruta <span class="sort-arrow"></span></th>
-            <th onclick="sortBy('fecha')">Fecha <span class="sort-arrow"></span></th>
-            <th onclick="sortBy('salida')">Salida <span class="sort-arrow"></span></th>
-            <th onclick="sortBy('llegada')">Llegada <span class="sort-arrow"></span></th>
-            <th onclick="sortBy('duracion')">Duración <span class="sort-arrow"></span></th>
-            <th onclick="sortBy('precio')">Precio <span class="sort-arrow"></span></th>
-            <th>✏️</th>
-            <th>Sel</th>
-          </tr>
-        </thead>
+        <thead><tr>
+          <th onclick="sortBy('aerolinea')">Aerolínea <span class="sort-arrow"></span></th>
+          <th onclick="sortBy('ruta')">Ruta <span class="sort-arrow"></span></th>
+          <th onclick="sortBy('fecha')">Fecha <span class="sort-arrow"></span></th>
+          <th onclick="sortBy('salida')">Salida <span class="sort-arrow"></span></th>
+          <th onclick="sortBy('llegada')">Llegada <span class="sort-arrow"></span></th>
+          <th onclick="sortBy('duracion')">Duración <span class="sort-arrow"></span></th>
+          <th onclick="sortBy('precio')">Precio <span class="sort-arrow"></span></th>
+          <th>✏️</th>
+          <th>Sel</th>
+        </tr></thead>
         <tbody id="tableBody"></tbody>
       </table>
     </div>
   </div>
-
-  <!-- Gráfico precios -->
   <div class="panel">
-    <h2>📈 Distribución de precios</h2>
-    <div class="chart-wrap">
-      <canvas id="priceChart" height="200"></canvas>
-    </div>
+    <h2>📈 Distribución precios</h2>
+    <div class="chart-wrap"><canvas id="priceChart" height="200"></canvas></div>
   </div>
-  
 </div>
 
-<!-- Tooltip flotante -->
 <div class="tl-tooltip" id="tlTooltip"></div>
 
-<script>
-// ── Data ──
-let DATA = null;
-let filtered = [];
-let selected = [];
-let sortField = 'precio';
-let sortAsc = true;
-let priceChart = null;
-
-const COLORS = {
-  'Ryanair': '#1565c0',
-  'Iberia Express': '#e65100',
-  'Iberia': '#6a1b9a',
-  'Vueling': '#00838f',
-};
-
-function timeToMins(t) {
-  const [h, m] = t.split(':').map(Number);
-  return h * 60 + m;
-}
-
-function minsToStr(m) {
-  const h = Math.floor(m / 60);
-  const mi = m % 60;
-  return h > 0 ? `${h}h ${mi}m` : `${mi}m`;
-}
-
-function formatDate(d) {
-  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const [y, m, day] = d.split('-');
-  return `${parseInt(day)} ${meses[parseInt(m)-1]}`;
-}
-
-// ── Import ──
-function importJSON(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const imported = JSON.parse(e.target.result);
-      if (imported.alternativas) {
-        DATA = imported;
-        loadLocalEdits();
-        populateFilters();
-        applyFilters();
-        updateStatus();
-        document.getElementById('statusMsg').innerHTML = '✅ Datos importados de <code>' + file.name + '</code>';
-      }
-    } catch(err) {
-      alert('Error al importar JSON: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
-  event.target.value = '';
-}
-
-function updateStatus() {
-  if (!DATA) return;
-  const meta = DATA.metadata || {};
-  const fuente = meta.fuente || 'desconocida';
-  const gen = meta.generado || '';
-  document.getElementById('statsFuente').textContent = fuente;
-
-  const n = DATA.alternativas.length;
-  const fileMsg = `${n} vuelos en data/vuelos.json`;
-  const editSpan = document.getElementById('statusEdits');
-  try {
-    const edits = JSON.parse(localStorage.getItem('vuelos_edits') || '{}');
-    const editCount = Object.keys(edits).length;
-    if (editCount > 0) {
-      editSpan.style.display = 'inline';
-      editSpan.innerHTML = ` · <span style="color:#e65100;">✏️ ${editCount} edits locales</span>`;
-    } else {
-      editSpan.style.display = 'none';
-    }
-  } catch(e) { editSpan.style.display = 'none'; }
-
-  document.getElementById('statusCount').textContent = n;
-  document.getElementById('statusFile').textContent = 'data/vuelos.json';
-  document.getElementById('statusMsg').innerHTML = gen
-    ? `✅ Cargado · última actualización: ${gen}`
-    : '✅ Cargado';
-}
-
-// ── Load data ──
-async function loadData() {
-  try {
-    const r = await fetch('data/vuelos.json');
-    DATA = await r.json();
-    loadLocalEdits();
-    updateStatus();
-    populateFilters();
-    applyFilters();
-  } catch (e) {
-    document.getElementById('tableBody').innerHTML =
-      `<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-light);">
-        ⚠️ No se pudo cargar <code>data/vuelos.json</code>.<br>
-        Asegúrate de que el archivo existe o ejecuta <code>python scraper_vuelos.py</code>.
-      </td></tr>`;
-    document.getElementById('statusMsg').textContent = '❌ No se pudo cargar data/vuelos.json';
-  }
-}
-
-// ── Filters ──
-function populateFilters() {
-  const rutaSel = document.getElementById('filterRuta');
-  const fechaSel = document.getElementById('filterFecha');
-  const rutas = new Set();
-  const fechas = new Set();
-
-  DATA.alternativas.forEach(f => {
-    rutas.add(`${f.origen.codigo}→${f.destino.codigo}`);
-    fechas.add(f.fecha);
-  });
-
-  rutaSel.innerHTML = '<option value="all">Todas las rutas</option>' +
-    [...rutas].sort().map(r => `<option value="${r}">${r}</option>`).join('');
-
-  fechaSel.innerHTML = '<option value="all">Todas las fechas</option>' +
-    [...fechas].sort().map(f => `<option value="${f}">${formatDate(f)}</option>`).join('');
-}
-
-function applyFilters() {
-  const ruta = document.getElementById('filterRuta').value;
-  const fecha = document.getElementById('filterFecha').value;
-  const tipo = document.getElementById('filterTipo').value;
-  const maxPrice = parseInt(document.getElementById('priceMax').value);
-
-  filtered = DATA.alternativas.filter(f => {
-    if (ruta !== 'all' && `${f.origen.codigo}→${f.destino.codigo}` !== ruta) return false;
-    if (fecha !== 'all' && f.fecha !== fecha) return false;
-    if (tipo !== 'all' && f.tipo !== tipo) return false;
-    if (f.precio_eur > maxPrice) return false;
-    return true;
-  });
-
-  sortData();
-  updateUI();
-}
-
-function sortData() {
-  filtered.sort((a, b) => {
-    let cmp = 0;
-    switch (sortField) {
-      case 'precio': cmp = a.precio_eur - b.precio_eur; break;
-      case 'salida': cmp = timeToMins(a.salida) - timeToMins(b.salida); break;
-      case 'llegada': cmp = timeToMins(a.llegada) - timeToMins(b.llegada); break;
-      case 'duracion': cmp = a.duracion_min - b.duracion_min; break;
-      case 'aerolinea': cmp = a.aerolinea.localeCompare(b.aerolinea); break;
-      case 'ruta': cmp = `${a.origen.codigo}→${a.destino.codigo}`.localeCompare(`${b.origen.codigo}→${b.destino.codigo}`); break;
-      case 'fecha': cmp = a.fecha.localeCompare(b.fecha); break;
-    }
-    return sortAsc ? cmp : -cmp;
-  });
-}
-
-let sortHistory = [];
-
-function sortBy(field) {
-  if (sortHistory.length && sortHistory[sortHistory.length-1] === field) {
-    sortAsc = !sortAsc;
-  } else {
-    sortField = field;
-    sortAsc = true;
-    sortHistory.push(field);
-    if (sortHistory.length > 3) sortHistory.shift();
-  }
-  sortData();
-  renderTable();
-  renderTimeline();
-}
-
-// ── Selection ──
-function toggleSelect(id) {
-  const idx = selected.indexOf(id);
-  if (idx >= 0) {
-    selected.splice(idx, 1);
-  } else {
-    if (selected.length < 4) selected.push(id);
-  }
-  renderTable();
-  renderTimeline();
-  updateComparisonBar();
-}
-
-function clearSelection() {
-  selected = [];
-  renderTable();
-  renderTimeline();
-  updateComparisonBar();
-}
-
-function updateComparisonBar() {
-  const bar = document.getElementById('comparisonBar');
-  if (selected.length === 0) {
-    bar.style.display = 'none';
-    return;
-  }
-  bar.style.display = 'flex';
-  document.getElementById('comparisonCount').textContent = selected.length;
-  const flights = selected.map(id => DATA.alternativas.find(f => f.id === id)).filter(Boolean);
-  const total = flights.reduce((s, f) => s + f.precio_eur, 0);
-  document.getElementById('comparisonTotal').textContent = `Total: ${total.toFixed(2)} €`;
-}
-
-// ── Stats ──
-function updateStats() {
-  if (filtered.length === 0) {
-    ['statMinPrice','statAvgPrice','statMaxPrice','statCount','statAirlines'].forEach(id => {
-      document.getElementById(id).textContent = '—';
-    });
-    return;
-  }
-  const prices = filtered.map(f => f.precio_eur);
-  const min = Math.min(...prices);
-  const max = Math.max(...prices);
-  const avg = prices.reduce((s, p) => s + p, 0) / prices.length;
-  const airlines = new Set(filtered.map(f => f.aerolinea));
-
-  document.getElementById('statMinPrice').textContent = `${min.toFixed(0)} €`;
-  document.getElementById('statMaxPrice').textContent = `${max.toFixed(0)} €`;
-  document.getElementById('statAvgPrice').textContent = `${avg.toFixed(0)} €`;
-  document.getElementById('statCount').textContent = filtered.length;
-  document.getElementById('statAirlines').textContent = [...airlines].join(', ');
-
-  const fechas = [...new Set(filtered.map(f => f.fecha))].sort();
-  document.getElementById('statsFecha').textContent = fechas.length ? `${formatDate(fechas[0])} — ${formatDate(fechas[fechas.length-1])}` : '';
-  document.getElementById('statsTotal').textContent = `${filtered.length} vuelos`;
-
-  document.getElementById('timelineCount').textContent = `(${filtered.length} vuelos)`;
-  document.getElementById('tableCount').textContent = `(${filtered.length} vuelos)`;
-}
-
-// ── Timeline ──
-function renderTimeline() {
-  const axis = document.getElementById('timelineAxis');
-  const track = document.getElementById('timelineTrack');
-
-  if (filtered.length === 0) {
-    axis.innerHTML = '<div style="text-align:center;color:var(--text-light);padding:20px;font-size:13px;">Sin vuelos para mostrar</div>';
-    track.innerHTML = '';
-    return;
-  }
-
-  const TOTAL_MIN = 24 * 60;
-  const HOUR_WIDTH = 72;
-  const PADDING = 0;
-  const totalWidth = PADDING * 2 + (TOTAL_MIN / 60) * HOUR_WIDTH;
-
-  // ── Axis ──
-  axis.innerHTML = '';
-  axis.style.width = `${totalWidth}px`;
-  for (let h = 0; h < 24; h++) {
-    const isMajor = h % 2 === 0;
-    const tick = document.createElement('div');
-    tick.className = `tick${isMajor ? ' major' : ''}`;
-    tick.style.left = `${(h / 24) * totalWidth}px`;
-    tick.textContent = isMajor ? `${String(h).padStart(2, '0')}:00` : '';
-    axis.appendChild(tick);
-  }
-
-  // ── Group flights by route ──
-  const groups = {};
-  filtered.forEach(f => {
-    const key = `${f.origen.codigo}→${f.destino.codigo}`;
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(f);
-  });
-
-  // Sort groups: ida first, then vuelta, then by route
-  const groupKeys = Object.keys(groups).sort((a, b) => {
-    const aIda = a.startsWith('IBZ') || a.startsWith('MAH') ? 1 : 0;
-    const bIda = b.startsWith('IBZ') || b.startsWith('MAH') ? 1 : 0;
-    if (aIda !== bIda) return aIda - bIda;
-    return a.localeCompare(b);
-  });
-
-  track.innerHTML = '';
-  track.style.width = `${totalWidth}px`;
-
-  let currentY = 0;
-  let tooltipTarget = null;
-
-  groupKeys.forEach((routeKey, gi) => {
-    const flights = groups[routeKey];
-
-    // ── Group header ──
-    const header = document.createElement('div');
-    header.className = 'tl-group';
-    header.innerHTML = `<div class="tl-group-header">
-      ✈️ ${routeKey} <span style="font-weight:400;">· ${flights[0].origen.nombre} → ${flights[0].destino.nombre}</span>
-      <span class="tl-route-count">${flights.length} vuelos</span>
-    </div>`;
-    header.style.position = 'relative';
-    header.style.top = `${currentY}px`;
-    track.appendChild(header);
-    currentY += 22;
-
-    // ── Group body ──
-    const body = document.createElement('div');
-    body.className = 'tl-group-body';
-    body.style.top = `${currentY}px`;
-    body.style.height = `38px`;
-
-    // Background hour grid
-    const grid = document.createElement('div');
-    grid.className = 'tl-bg-grid';
-    for (let h = 0; h < 24; h++) {
-      const line = document.createElement('div');
-      line.className = 'hour-line';
-      line.style.left = `${(h / 24) * totalWidth}px`;
-      grid.appendChild(line);
-    }
-    body.appendChild(grid);
-
-    // ── Flight bars ──
-    // Sort by departure time within group
-    flights.sort((a, b) => timeToMins(a.salida) - timeToMins(b.salida));
-
-    flights.forEach((f, fi) => {
-      const dep = timeToMins(f.salida);
-      const arr = timeToMins(f.llegada);
-      let duration = f.duracion_min || (arr - dep);
-      if (arr < dep) duration = (24 * 60 - dep) + arr;
-      if (duration < 5) duration = 30; // minimum visible duration
-
-      const x = (dep / TOTAL_MIN) * totalWidth;
-      const w = Math.max((duration / TOTAL_MIN) * totalWidth, 14);
-
-      // Multiple flights in same group: stack vertically
-      const barTop = 2 + (fi % 3) * 12;
-
-      const bar = document.createElement('div');
-      bar.className = `tl-flight${selected.includes(f.id) ? ' selected' : ''}`;
-      bar.style.left = `${x}px`;
-      bar.style.width = `${w}px`;
-      bar.style.top = `${barTop}px`;
-      bar.style.background = COLORS[f.aerolinea] || '#888';
-      bar.dataset.id = f.id;
-
-      // Time badge
-      const timeBadge = document.createElement('span');
-      timeBadge.className = 'tl-time-badge';
-      timeBadge.textContent = f.salida;
-      bar.appendChild(timeBadge);
-
-      // Airline label
-      const airLabel = document.createElement('span');
-      airLabel.className = 'tl-airline-label';
-      airLabel.textContent = f.aerolinea.substring(0, 4);
-      bar.appendChild(airLabel);
-
-      // Duration
-      if (w > 60) {
-        const durLabel = document.createElement('span');
-        durLabel.className = 'tl-duration';
-        durLabel.textContent = minsToStr(duration);
-        bar.appendChild(durLabel);
-      }
-
-      // Price badge
-      const priceBadge = document.createElement('span');
-      priceBadge.className = 'tl-price-badge';
-      priceBadge.textContent = `${f.precio_eur}€`;
-      bar.appendChild(priceBadge);
-
-      // Click
-      bar.onclick = (e) => {
-        e.stopPropagation();
-        toggleSelect(f.id);
-      };
-
-      // Hover tooltip
-      bar.onmouseenter = (e) => showTooltip(e, f);
-      bar.onmouseleave = () => hideTooltip();
-      bar.onmousemove = (e) => moveTooltip(e);
-
-      body.appendChild(bar);
-    });
-
-    track.appendChild(body);
-    currentY += 42;
-  });
-}
-
-// ── Tooltip ──
-let tooltipTimeout = null;
-
-function showTooltip(e, f) {
-  const t = document.getElementById('tlTooltip');
-  const priceClass = f.precio_eur <= 50 ? 'color:#48c774' : f.precio_eur >= 100 ? 'color:#ff9f43' : '';
-  t.innerHTML = `
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-      <span style="width:8px;height:8px;border-radius:50%;background:${COLORS[f.aerolinea] || '#888'};display:inline-block;"></span>
-      <strong>${f.aerolinea} ${f.vuelo}</strong>
-    </div>
-    <div class="tt-row"><span>${f.origen.codigo} ${f.origen.nombre}</span><span>${f.salida}</span></div>
-    <div class="tt-row"><span>${f.destino.codigo} ${f.destino.nombre}</span><span>${f.llegada}</span></div>
-    <div class="tt-row" style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.15);">
-      <span>Duracion: ${minsToStr(f.duracion_min)}</span>
-      <span style="${priceClass};font-weight:800;font-size:14px;">${f.precio_eur.toFixed(0)} EUR</span>
-    </div>
-    ${f.escalas > 0 ? `<div style="font-size:10px;opacity:0.7;margin-top:2px;">${f.escalas} escala(s)</div>` : '<div style="font-size:10px;color:#48c774;margin-top:2px;">Directo</div>'}
-  `;
-  t.style.display = 'block';
-  moveTooltip(e);
-}
-
-function moveTooltip(e) {
-  const t = document.getElementById('tlTooltip');
-  const x = e.clientX + 14;
-  const y = e.clientY - 10;
-  const maxX = window.innerWidth - 240;
-  const maxY = window.innerHeight - 160;
-  t.style.left = `${Math.min(x, maxX)}px`;
-  t.style.top = `${Math.min(y, maxY)}px`;
-}
-
-function hideTooltip() {
-  const t = document.getElementById('tlTooltip');
-  t.style.display = 'none';
-}
-
-// ── Table ──
-function renderTable() {
-  const tbody = document.getElementById('tableBody');
-  if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text-light);">No hay vuelos que coincidan con los filtros</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = filtered.map(f => {
-    const sel = selected.includes(f.id);
-    const priceClass = f.precio_eur <= 50 ? 'price-green' : f.precio_eur >= 100 ? 'price-warn' : '';
-    return `<tr class="${sel ? 'selected-row' : ''}">
-      <td><strong>${f.aerolinea}</strong> <span style="color:var(--text-light);font-size:11px;">${f.vuelo}</span></td>
-      <td>${f.origen.codigo} → ${f.destino.codigo}</td>
-      <td>${formatDate(f.fecha)}</td>
-      <td>${f.salida}</td>
-      <td>${f.llegada}</td>
-      <td>${minsToStr(f.duracion_min)}</td>
-      <td class="price-cell ${priceClass}" id="price-${f.id}">
-        ${f.precio_eur.toFixed(0)} <small>€</small>
-        <span class="edit-price" onclick="event.stopPropagation();editPrice('${f.id}')" title="Editar precio">✏️</span>
-      </td>
-      <td style="text-align:center;" onclick="toggleSelect('${f.id}')">${sel ? '✅' : '☐'}</td>
-    </tr>`;
-  }).join('');
-}
-
-// ── Combinaciones ──
-function renderCombos() {
-  const container = document.getElementById('comboList');
-  const combos = DATA.combinaciones || [];
-
-  document.getElementById('comboCount').textContent = `(${combos.length} combinaciones)`;
-
-  if (combos.length === 0) {
-    container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-light);font-size:13px;">No hay combinaciones definidas. Ejecuta <code>scraper_vuelos.py</code> para generarlas.</div>';
-    return;
-  }
-
-  container.innerHTML = combos.map(c => {
-    const ida = DATA.alternativas.find(f => f.id === c.ida_id);
-    const vuelta = DATA.alternativas.find(f => f.id === c.vuelta_id);
-    const priceClass = c.precio_total <= 100 ? 'price-green' : c.precio_total >= 180 ? 'price-warn' : '';
-    const gfUrl = ida ? `https://www.google.com/travel/flights?q=Flights+to+${ida.destino.codigo}+from+${ida.origen.codigo}+on+${ida.fecha}&curr=EUR` : '#';
-    return `<div class="combo-card">
-      <div class="combo-price ${priceClass}">${c.precio_total.toFixed(0)} €</div>
-      <div class="combo-detail">
-        <strong>${c.origen_nombre}</strong> →
-        ${ida ? `${ida.destino.nombre} <span style="color:var(--text-light);font-size:11px;">(${ida.aerolinea} ${ida.salida})</span>` : '?'}
-        <span style="color:var(--text-light);font-size:11px;"> · </span>
-        ${vuelta ? `<span style="color:var(--text-light);font-size:11px;">Vuelta: ${vuelta.aerolinea} ${vuelta.salida}</span>` : '?'}
-        <span style="display:block;margin-top:4px;">
-          <a href="${gfUrl}" target="_blank" style="font-size:10px;color:var(--accent);text-decoration:none;" onclick="event.stopPropagation()">🔗 Google Flights</a>
-        </span>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ── Chart ──
-function renderChart() {
-  if (filtered.length === 0) return;
-
-  const prices = filtered.map(f => f.precio_eur);
-  const min = Math.floor(Math.min(...prices) / 10) * 10;
-  const max = Math.ceil(Math.max(...prices) / 10) * 10;
-  const step = Math.max(1, Math.ceil((max - min) / 8));
-  const buckets = {};
-  for (let b = min; b <= max; b += step) {
-    buckets[`${b}-${b+step}`] = 0;
-  }
-  prices.forEach(p => {
-    const bucket = Math.floor((p - min) / step) * step + min;
-    const key = `${bucket}-${bucket+step}`;
-    if (buckets[key] !== undefined) buckets[key]++;
-  });
-
-  const ctx = document.getElementById('priceChart').getContext('2d');
-  if (priceChart) priceChart.destroy();
-
-  priceChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: Object.keys(buckets).map(k => `${k.split('-')[0]}€`),
-      datasets: [{
-        label: 'Vuelos',
-        data: Object.values(buckets),
-        backgroundColor: '#00b4d8',
-        borderRadius: 4,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      scales: {
-        y: { beginAtZero: true, ticks: { stepSize: 1 }, title: { display: true, text: 'Nº vuelos' } },
-        x: { title: { display: true, text: 'Precio (€)' } }
-      },
-      plugins: { legend: { display: false } }
-    }
-  });
-}
-
-// ── Edit price ──
-function editPrice(id) {
-  const f = DATA.alternativas.find(x => x.id === id);
-  if (!f) return;
-  const current = f.precio_eur;
-  const cell = document.getElementById(`price-${id}`);
-  cell.innerHTML = `<input type="number" class="price-input" value="${current}" step="0.01" min="0" id="input-${id}" onblur="savePrice('${id}')" onkeydown="if(event.key==='Enter')savePrice('${id}');if(event.key==='Escape')cancelEdit('${id}','${current}')">`;
-  document.getElementById(`input-${id}`).focus();
-}
-
-function savePrice(id) {
-  const input = document.getElementById(`input-${id}`);
-  if (!input) return;
-  const val = parseFloat(input.value);
-  if (isNaN(val) || val < 0) return cancelEdit(id, DATA.alternativas.find(f => f.id === id)?.precio_eur || 0);
-  const f = DATA.alternativas.find(x => x.id === id);
-  if (!f) return;
-  const oldPrice = f.precio_eur;
-  f.precio_eur = val;
-  saveLocalEdits();
-  applyFilters();
-}
-
-function cancelEdit(id, original) {
-  const f = DATA.alternativas.find(x => x.id === id);
-  if (f) f.precio_eur = original;
-  applyFilters();
-}
-
-function saveLocalEdits() {
-  const edits = {};
-  DATA.alternativas.forEach(f => { edits[f.id] = f.precio_eur; });
-  try { localStorage.setItem('vuelos_edits', JSON.stringify(edits)); } catch(e) {}
-}
-
-function loadLocalEdits() {
-  try {
-    const raw = localStorage.getItem('vuelos_edits');
-    if (!raw) return;
-    const edits = JSON.parse(raw);
-    DATA.alternativas.forEach(f => {
-      if (edits[f.id] !== undefined) f.precio_eur = edits[f.id];
-    });
-  } catch(e) {}
-}
-
-// ── Google Flights (abre todas las rutas filtradas) ──
-function openGoogleFlights() {
-  const ruta = document.getElementById('filterRuta').value;
-  const fecha = document.getElementById('filterFecha').value;
-
-  if (ruta !== 'all' && fecha !== 'all') {
-    const parts = ruta.split('→');
-    const gfUrl = `https://www.google.com/travel/flights?q=Flights+to+${parts[1]}+from+${parts[0]}+on+${fecha}&curr=EUR`;
-    window.open(gfUrl, '_blank');
-    return;
-  }
-
-  // Si hay filtro amplio, abrir todas las rutas únicas
-  const rutas = [...new Set(DATA.alternativas.map(f => `${f.origen.codigo}→${f.destino.codigo}`))];
-  const fechas = [...new Set(DATA.alternativas.map(f => f.fecha))].sort();
-  const targetDate = fechas[0] || '2026-09-01';
-
-  rutas.forEach(r => {
-    const [o, d] = r.split('→');
-    const url = `https://www.google.com/travel/flights?q=Flights+to+${d}+from+${o}+on+${targetDate}&curr=EUR`;
-    window.open(url, '_blank');
-  });
-}
-
-// ── Export JSON ──
-function exportJSON() {
-  const meta = DATA.metadata || {};
-  meta.generado = new Date().toISOString().slice(0, 16).replace('T', ' ');
-  meta.fuente = 'comparador-vuelos.html (edicion manual)';
-  DATA.metadata = meta;
-
-  DATA.combinaciones = buildCombinationsFromData();
-
-  const blob = new Blob([JSON.stringify(DATA, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'vuelos-actualizados.json';
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function buildCombinationsFromData() {
-  const ida = DATA.alternativas.filter(f => f.tipo === 'ida');
-  const vuelta = DATA.alternativas.filter(f => f.tipo === 'vuelta');
-  const combos = [];
-  for (const f of ida) {
-    const returns = vuelta.filter(r => r.origen.codigo === f.destino.codigo && r.destino.codigo === f.origen.codigo);
-    for (const r of returns) {
-      combos.push({
-        persona: `${f.origen.codigo}→${f.destino.codigo}`,
-        origen: f.origen.codigo,
-        origen_nombre: f.origen.nombre,
-        ida_id: f.id,
-        vuelta_id: r.id,
-        precio_total: Math.round((f.precio_eur + r.precio_eur) * 100) / 100,
-      });
-    }
-  }
-  return combos;
-}
-
-// ── Update all ──
-function updateUI() {
-  updateStats();
-  renderTable();
-  renderTimeline();
-  renderChart();
-  renderCombos();
-  updateComparisonBar();
-}
-
-// ── Init ──
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadData();
-
-  document.getElementById('filterRuta').addEventListener('change', applyFilters);
-  document.getElementById('filterFecha').addEventListener('change', applyFilters);
-  document.getElementById('filterTipo').addEventListener('change', applyFilters);
-  document.getElementById('filterSort').addEventListener('change', function() {
-    const v = this.value;
-    sortField = v.replace('-desc', '');
-    sortAsc = !v.includes('-desc');
-    applyFilters();
-  });
-  document.getElementById('priceMax').addEventListener('input', function() {
-    document.getElementById('priceMaxLabel').textContent = `${this.value} €`;
-    applyFilters();
-  });
-
-  if (DATA) {
-    populateFilters();
-    applyFilters();
-  }
-
-  // Re-render timeline on resize
-  window.addEventListener('resize', renderTimeline);
-});
-
-// Keyboard shortcut: Esc to clear selection
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') clearSelection();
-});
-</script>
+<script src="js/core/utils.js"></script>
+<script src="js/core/data-io.js"></script>
+<script src="js/core/ui.js"></script>
+<script src="js/components/flight-timeline.js"></script>
+<script src="js/pages/comparador-vuelos.js"></script>
 </body>
 </html>

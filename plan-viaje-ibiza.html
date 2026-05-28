@@ -7,123 +7,38 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="css/shared.css">
 <style>
-  :root {
-    --primary: #0d2137;
-    --accent: #00b4d8;
-    --accent2: #48c774;
-    --warn: #ff9f43;
-    --bg: #f4f6f8;
-    --card: #fff;
-    --text: #2d3436;
-    --text-light: #636e72;
-    --border: #dfe6e9;
-    --radius: 14px;
-    --shadow: 0 4px 20px rgba(0,0,0,0.06);
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    background: var(--bg); color: var(--text); padding: 20px;
-  }
-  .header { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; margin-bottom:24px; gap:12px; }
-  .header h1 { font-size:24px; color:var(--primary); }
-  .header h1 small { font-size:13px; font-weight:400; color:var(--text-light); display:block; }
-  .badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:600; white-space:nowrap; }
-  .badge-conf { background:#e8f5e9; color:#2e7d32; }
-  .badge-est { background:#fff3e0; color:#e65100; }
-  .badge-total { background:#fff3e0; color:#e65100; font-size:15px; padding:5px 14px; }
-
-  .summary { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:12px; margin-bottom:24px; }
-  .stat { background:var(--card); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); text-align:center; border-left:4px solid var(--accent); }
-  .stat .value { font-size:26px; font-weight:800; color:var(--primary); }
-  .stat .label { font-size:11px; color:var(--text-light); margin-top:3px; text-transform:uppercase; letter-spacing:.5px; }
-  .stat.green { border-left-color:var(--accent2); } .stat.green .value { color:#2e7d32; }
-  .stat.warn { border-left-color:var(--warn); } .stat.warn .value { color:#e65100; }
-
-  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(460px,1fr)); gap:20px; }
-  .grid-full { grid-column:1/-1; }
-  .card { background:var(--card); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); }
-  .card h2 { font-size:16px; color:var(--primary); margin-bottom:12px; padding-bottom:8px; border-bottom:2px solid #eef1f5; display:flex; align-items:center; gap:8px; }
-  .card h2 .tag { font-size:10px; font-weight:600; padding:2px 8px; border-radius:10px; background:#e3f2fd; color:#1565c0; margin-left:auto; }
   #map { height:440px; border-radius:10px; z-index:1; margin-top:4px; }
-  .map-legend { display:flex; gap:14px; flex-wrap:wrap; margin-top:8px; font-size:11px; }
-  .map-legend span { display:flex; align-items:center; gap:5px; }
-  .map-legend .dot { width:12px; height:3px; border-radius:2px; display:inline-block; }
-
-  .timeline { display:flex; flex-direction:column; gap:2px; }
-  .timeline .day-group { margin-bottom:16px; }
-  .timeline .day-label { font-size:14px; font-weight:700; color:var(--primary); padding:8px 0; display:flex; align-items:center; gap:8px; flex-wrap:wrap; border-bottom:2px solid var(--primary); margin-bottom:4px; cursor:pointer; user-select:none; }
-  .timeline .day-label:hover { opacity:0.7; }
-  .timeline .day-label .arrow { font-size:12px; transition:transform .2s; margin-left:auto; color:var(--text-light); }
-  .timeline .day-label.open .arrow { transform:rotate(180deg); }
-  .timeline .day-body { overflow:hidden; transition:max-height .3s ease; max-height:0; }
-  .timeline .day-body.open { max-height:2000px; }
-  .timeline .day-label .day-date { font-weight:400; font-size:12px; color:var(--text-light); }
-  .tl-row { display:grid; grid-template-columns:68px 1fr 55px; gap:6px; padding:4px; border-radius:6px; align-items:start; border-left:3px solid transparent; }
-  .tl-row:hover { background:#f8f9fa; }
-  .tl-row .time { font-size:11px; font-weight:600; color:var(--text-light); font-variant-numeric:tabular-nums; padding-top:1px; }
-  .tl-row .desc { font-size:12px; line-height:1.4; }
-  .tl-row .tag { display:inline-block; font-size:9px; font-weight:600; padding:1px 6px; border-radius:8px; text-transform:uppercase; letter-spacing:.2px; margin-right:4px; }
-  .tag-flight { background:#e3f2fd; color:#1565c0; }
-  .tag-boat { background:#e8f5e9; color:#2e7d32; }
-  .tag-food { background:#fff3e0; color:#e65100; }
-  .tag-fun { background:#f3e5f5; color:#6a1b9a; }
-  .tag-admin { background:#ffebee; color:#c62828; }
-  .tag-travel { background:#e0f7fa; color:#00695c; }
-  .tag-land { background:#fce4ec; color:#880e4f; }
-  .tl-row .cost { font-size:11px; text-align:right; font-weight:500; color:var(--text-light); white-space:nowrap; }
-  .tl-row .src { font-size:10px; color:#888; }
-
-  .link-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:8px; }
-  .link-card { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; background:#f8f9fa; border:1px solid var(--border); text-decoration:none; color:inherit; transition:all .2s; }
-  .link-card:hover { border-color:var(--accent); background:#eef8ff; transform:translateY(-1px); }
-  .link-card .emoji { font-size:20px; flex-shrink:0; }
-  .link-card .info { flex:1; min-width:0; }
-  .link-card .info strong { display:block; font-size:12px; }
-  .link-card .info span { font-size:11px; color:var(--text-light); display:block; }
-  .link-card .info .badge { font-size:9px; padding:1px 6px; }
-  .link-card .arrow { color:var(--accent); font-size:14px; flex-shrink:0; }
-
-  .checklist { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px,1fr)); gap:10px; }
-  .check-item { padding:8px 12px; background:#f8f9fa; border-radius:8px; border-left:3px solid var(--accent); }
-  .check-item h4 { font-size:12px; margin-bottom:2px; }
-  .check-item li { font-size:11px; color:var(--text-light); line-height:1.5; }
-  .check-item ul { padding-left:14px; margin-top:2px; }
-  .check-item.warn { border-left-color:var(--warn); }
-
-  .note-box { padding:14px; border-radius:8px; font-size:12px; line-height:1.5; border-left:4px solid var(--warn); background:#fffcf0; }
-  .note-box strong { color:#e65100; }
-  table { width:100%; border-collapse:collapse; font-size:12px; }
-  th { background:var(--primary); color:#fff; padding:8px 6px; text-align:left; font-weight:600; font-size:11px; }
-  td { padding:6px; border-bottom:1px solid #f0f0f0; }
-  tr:nth-child(even) { background:#fafbfc; }
-  .rank-1 { background:#e8f5e9 !important; font-weight:600; }
-
-  @media (max-width:600px) {
-    body { padding:10px; }
-    .grid { grid-template-columns:1fr; }
-    .summary { grid-template-columns:1fr 1fr; }
-    .tl-row { grid-template-columns:55px 1fr 40px; gap:3px; }
-    #map { height:300px; }
-  }
+  @media (max-width:600px) { #map { height:300px; } }
 </style>
 </head>
 <body>
 
+<nav class="navbar">
+  <a class="nav-brand" href="plan-viaje-ibiza.html">⛵ Viaje Velero</a>
+  <div class="nav-links">
+    <a href="plan-viaje-ibiza.html" class="nav-link active">Plan</a>
+    <a href="comparador-barcos.html" class="nav-link">Barcos</a>
+    <a href="comparador-vuelos.html" class="nav-link">Vuelos</a>
+    <a href="comparador-alojamientos.html" class="nav-link">Alojamientos</a>
+    <a href="comparador-viaje.html" class="nav-link">Comparador</a>
+  </div>
+</nav>
+
 <div class="header">
   <div>
     <h1>⛵ Viaje Velero a Ibiza <span class="badge badge-total">~568 €/pers</span></h1>
-    <small style="color:var(--text-light);margin-top:4px;display:block;">
+    <p class="header-meta">
       3 Valencia · 1 Madrid · 1 Italia &nbsp;|&nbsp;
       <span class="badge badge-conf">✅ Vuelos asegurados</span>
       <span class="badge badge-conf">31 Ago → 3 Sep</span>
       <span class="badge badge-conf">Ibiza</span>
-    </small>
+    </p>
   </div>
-  <div style="text-align:right;">
-    <div style="font-size:24px;font-weight:800;color:var(--primary);">~2.840 €</div>
-    <div style="font-size:12px;color:var(--text-light);">total grupo · 5 pers · 4 días</div>
+  <div class="header-right">
+    <div class="big-number">~2.840 €</div>
+    <div class="small-label">total grupo · 5 pers · 4 días</div>
   </div>
 </div>
 
@@ -142,14 +57,14 @@
   <div class="card grid-full">
     <h2>🗺️ Mapa</h2>
     <div id="map"></div>
-    <div style="margin-top:8px;font-size:12px;color:var(--text-light);display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+    <div class="map-meta">
       <span>🛫 Origen · ⛵ Botafoc · 🏨 San Antonio · 🟢 Fondeo gratuito · 🔵 Amarre pago · 🔴 Peligro</span>
-      <span style="color:#2196F3;">━ Día 1 ~28.5 MN</span>
-      <span style="color:#4CAF50;">━ Día 2 ~37 MN</span>
-      <span style="color:#FF9800;">━ Día 3 ~16 MN</span>
-      <span style="color:#e74c3c;">● Peligros</span>
-      <span style="color:#27ae60;border:2px solid #27ae60;border-radius:10px;padding:0 6px;font-weight:600;">Zonas fondeo</span>
-      <span style="margin-left:auto;font-size:11px;">🌐 Cambia capa: callejero / satélite ▼</span>
+      <span class="route-label" style="color:#2196F3;">━ Día 1 ~28.5 MN</span>
+      <span class="route-label" style="color:#4CAF50;">━ Día 2 ~37 MN</span>
+      <span class="route-label" style="color:#FF9800;">━ Día 3 ~16 MN</span>
+      <span class="route-label" style="color:#e74c3c;">● Peligros</span>
+      <span class="zone-badge">Zonas fondeo</span>
+      <span class="layer-info">🌐 Cambia capa: callejero / satélite ▼</span>
     </div>
   </div>
 
@@ -159,46 +74,45 @@
   <div class="card grid-full">
     <h2>🧭 Planeamiento náutico <span class="tag">Sun Odyssey 349 · 10.3m · 1.95m calado</span></h2>
 
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:14px;font-size:12px;">
-      <div style="background:#e3f2fd;padding:10px;border-radius:8px;"><strong>🌡️ Clima Sep</strong><br>Temp: 27-30°C<br>Agua 25°C<br>Viento E/NE 10-15 nudos<br>Oleaje 0.5-1.5m</div>
-      <div style="background:#e8f5e9;padding:10px;border-radius:8px;"><strong>⛵ Vela</strong><br>Embat E/NE 11-18h<br>Través favorable<br>Ceñida vueltas D1/D2<br>Mañanas motor</div>
-      <div style="background:#fff3e0;padding:10px;border-radius:8px;"><strong>⛽ Consumo</strong><br>~18-20L gasoil<br>~35€ total<br>1.5-2L/h a 5 nudos<br>Autonomía ~120 MN</div>
-      <div style="background:#fce4ec;padding:10px;border-radius:8px;"><strong>⚠️ Peligros clave</strong><br>Bajo Caragoler (0.5m)<br>L'Esponja (1m)<br>Es Freus (corrientes)<br>Baix des Caló (0.5m)</div>
-      <div style="background:#f3e5f5;padding:10px;border-radius:8px;"><strong>🅿️ Fondeo</strong><br>Arena: CC, CD, BE, PR<br>NO sobre Posidonia<br>Multa 600-3000€<br>Nocturna solo puerto</div>
+    <div class="info-grid">
+      <div class="info-card clima"><strong>🌡️ Clima Sep</strong><br>Temp: 27-30°C<br>Agua 25°C<br>Viento E/NE 10-15 nudos<br>Oleaje 0.5-1.5m</div>
+      <div class="info-card vela"><strong>⛵ Vela</strong><br>Embat E/NE 11-18h<br>Través favorable<br>Ceñida vueltas D1/D2<br>Mañanas motor</div>
+      <div class="info-card consumo"><strong>⛽ Consumo</strong><br>~18-20L gasoil<br>~35€ total<br>1.5-2L/h a 5 nudos<br>Autonomía ~120 MN</div>
+      <div class="info-card peligros"><strong>⚠️ Peligros clave</strong><br>Bajo Caragoler (0.5m)<br>L'Esponja (1m)<br>Es Freus (corrientes)<br>Baix des Caló (0.5m)</div>
+      <div class="info-card fondeo"><strong>🅿️ Fondeo</strong><br>Arena: CC, CD, BE, PR<br>NO sobre Posidonia<br>Multa 600-3000€<br>Nocturna solo puerto</div>
     </div>
 
-    <h3 style="font-size:13px;color:var(--primary);margin:10px 0 6px;">📏 Rutas detalle · distancias y rumbos</h3>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px;font-size:12px;">
-      <div style="border:1px solid #2196F3;border-radius:8px;padding:8px;">
-        <strong style="color:#2196F3;">📅 Día 1 · Mar 1 Sep · ~28.5 MN</strong>
-        <table style="width:100%;font-size:11px;margin-top:4px;">
+    <h3 class="section-title">📏 Rutas detalle · distancias y rumbos</h3>
+    <div class="route-grid">
+      <div class="route-card" style="border:1px solid #2196F3;">
+        <h4 style="color:#2196F3;">📅 Día 1 · Mar 1 Sep · ~28.5 MN</h4>
+        <table>
           <tr><td>MB → Ses Portes (S)</td><td>6.5 MN</td><td>270° / través</td></tr>
           <tr><td>Ses Portes → CC (NO)</td><td>5.0 MN</td><td>290° / través</td></tr>
           <tr><td>CC → CD (S)</td><td>5.5 MN</td><td>⚠️ Bajo Caragoler</td></tr>
           <tr><td>CD → MB (E/NE)</td><td>11.5 MN</td><td>Ceñida/ motor</td></tr>
         </table>
-        <div style="margin-top:4px;color:var(--text-light);">Pernocta: amarre <a href="https://www.portsib.es/" target="_blank" style="color:var(--accent);">Marina Botafoc</a> ~30-40€</div>
+        <div class="route-meta">Pernocta: amarre <a href="https://www.portsib.es/" target="_blank" style="color:var(--accent);">Marina Botafoc</a> ~30-40€</div>
       </div>
-      <div style="border:1px solid #4CAF50;border-radius:8px;padding:8px;">
-        <strong style="color:#4CAF50;">📅 Día 2 · Mié 2 Sep · ~37 MN</strong>
-        <table style="width:100%;font-size:11px;margin-top:4px;">
+      <div class="route-card" style="border:1px solid #4CAF50;">
+        <h4 style="color:#4CAF50;">📅 Día 2 · Mié 2 Sep · ~37 MN</h4>
+        <table>
           <tr><td>MB → Tagomago (NE)</td><td>16 MN</td><td>060° / través embat</td></tr>
           <tr><td>Tagomago → BE (NO)</td><td>11.5 MN</td><td>⚠️ Baix des Caló</td></tr>
           <tr><td>BE → MB (O/S rodea sur)</td><td>9.5 MN</td><td>Ceñida probable</td></tr>
         </table>
-        <div style="margin-top:4px;color:var(--text-light);">Pernocta: amarre <a href="https://www.portsib.es/" target="_blank" style="color:var(--accent);">Marina Botafoc</a> ~30-40€</div>
+        <div class="route-meta">Pernocta: amarre <a href="https://www.portsib.es/" target="_blank" style="color:var(--accent);">Marina Botafoc</a> ~30-40€</div>
       </div>
-      <div style="border:1px solid #FF9800;border-radius:8px;padding:8px;">
-        <strong style="color:#FF9800;">📅 Día 3 · Jue 3 Sep · ~16 MN</strong>
-        <table style="width:100%;font-size:11px;margin-top:4px;">
+      <div class="route-card" style="border:1px solid #FF9800;">
+        <h4 style="color:#FF9800;">📅 Día 3 · Jue 3 Sep · ~16 MN</h4>
+        <table>
           <tr><td>MB → Porroig (O/SO)</td><td>8 MN</td><td>Motor mañana</td></tr>
           <tr><td>Porroig → MB (E/NE)</td><td>8 MN</td><td>Vuelta antes 15:00</td></tr>
         </table>
-        <div style="margin-top:4px;color:var(--text-light);"></div>
       </div>
     </div>
 
-    <h3 style="font-size:13px;color:var(--primary);margin:12px 0 6px;">⛔ Zonas de peligro</h3>
+    <h3 class="section-title">⛔ Zonas de peligro</h3>
     <table>
       <tr><th>Zona</th><th>Coordenadas</th><th>Peligro</th><th>Recomendación</th></tr>
       <tr><td>Bajo Caragoler</td><td>38°55.0'N 1°16.0'E</td><td>Roca a 0.5m</td><td>Pasar al S o al N, nunca encima</td></tr>
@@ -208,7 +122,7 @@
       <tr><td>Roca sa Gorra</td><td>38°55.0'N 1°28.5'E</td><td>Roca a 1m</td><td>Boya peligro, canal balizado</td></tr>
     </table>
 
-    <h3 style="font-size:13px;color:var(--primary);margin:12px 0 6px;">🅿️ Zonas de fondeo y amarres</h3>
+    <h3 class="section-title">🅿️ Zonas de fondeo y amarres</h3>
     <table>
       <tr><th>Zona</th><th>Coordenadas</th><th>Fondo</th><th>Prof.</th><th>Precio</th><th>Enlace / Notas</th></tr>
       <tr><td>Marina Botafoc</td><td>38°54.5'N 1°26.1'E</td><td>Hormigón</td><td>5-8m</td><td>30-40€/noche</td><td><a href="https://www.portsib.es/" target="_blank" style="color:var(--accent);">PortsIB</a> · <a href="https://www.marinabotafoc.com/" target="_blank" style="color:var(--accent);">Marina Botafoc</a><br>Agua+luz incluido. Reservar con antelación</td></tr>
@@ -219,8 +133,8 @@
       <tr><td>Porroig</td><td>38°53.0'N 1°16.0'E</td><td>Arena</td><td>4-8m</td><td>Gratis fondeo</td><td>Excelente refugio · Ideal para D3</td></tr>
     </table>
 
-    <div style="margin-top:10px;font-size:11px;color:var(--text-light);display:flex;gap:14px;flex-wrap:wrap;">
-      <span>📄 <a href="planeamiento-nautico.md" target="_blank" style="color:var(--accent);">Documento completo</a> · waypoints, mareas, balizas, checklist, VHF, emergencias</span>
+    <div class="nautical-footer">
+      <span>📄 <a href="planeamiento-nautico.md" target="_blank" class="accent-link">Documento completo</a> · waypoints, mareas, balizas, checklist, VHF, emergencias</span>
       <span>🚫 <strong>No fondear sobre Posidonia</strong> · multa 600-3000€</span>
       <span>📱 Apps: Navionics, Windy, Savy Navvy</span>
     </div>
@@ -591,54 +505,52 @@
   <!-- LISTA DE COMPRA -->
   <div class="card">
     <h2>🛒 Lista de la compra <span class="tag">~100€ · Mercadona · 3 días</span></h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;font-size:11px;">
-      <div><strong style="color:#1565c0;">🥐 Desayunos (×3)</strong>
-        <div style="display:grid;grid-template-columns:1fr auto;gap:2px 8px;margin:3px 0 6px;">
-          <span>Leche 2 L</span><span style="text-align:right;">1,80€</span>
-          <span>Cereales</span><span style="text-align:right;">2,50€</span>
-          <span>Café soluble</span><span style="text-align:right;">3,00€</span>
-          <span>Pan bimbo</span><span style="text-align:right;">1,50€</span>
-          <span>Mermelada</span><span style="text-align:right;">2,50€</span>
-          <span>Galletas</span><span style="text-align:right;">2,00€</span>
-          <span>Fruta (plátanos, manzanas)</span><span style="text-align:right;">4,00€</span>
+    <div class="shop-grid">
+      <div class="shop-category"><h4 style="color:#1565c0;">🥐 Desayunos (×3)</h4>
+        <div class="shop-items">
+          <span>Leche 2 L</span><span class="price">1,80€</span>
+          <span>Cereales</span><span class="price">2,50€</span>
+          <span>Café soluble</span><span class="price">3,00€</span>
+          <span>Pan bimbo</span><span class="price">1,50€</span>
+          <span>Mermelada</span><span class="price">2,50€</span>
+          <span>Galletas</span><span class="price">2,00€</span>
+          <span>Fruta (plátanos, manzanas)</span><span class="price">4,00€</span>
         </div>
       </div>
-      <div><strong style="color:#2e7d32;">🥗 Comidas a bordo (×3)</strong>
-        <div style="display:grid;grid-template-columns:1fr auto;gap:2px 8px;margin:3px 0 6px;">
-          <span>Embutido variado 400g</span><span style="text-align:right;">8,00€</span>
-          <span>Queso semicurado 200g</span><span style="text-align:right;">4,00€</span>
-          <span>Tomates cherry</span><span style="text-align:right;">2,00€</span>
-          <span>Atún lata ×4</span><span style="text-align:right;">5,00€</span>
-          <span>Paté</span><span style="text-align:right;">2,00€</span>
-          <span>Ensalada preparada ×3</span><span style="text-align:right;">6,00€</span>
-          <span>Pasta + salsa</span><span style="text-align:right;">4,00€</span>
-          <span>Arroz + verduras</span><span style="text-align:right;">5,00€</span>
-          <span>Huevos ×6</span><span style="text-align:right;">2,00€</span>
+      <div class="shop-category"><h4 style="color:#2e7d32;">🥗 Comidas a bordo (×3)</h4>
+        <div class="shop-items">
+          <span>Embutido variado 400g</span><span class="price">8,00€</span>
+          <span>Queso semicurado 200g</span><span class="price">4,00€</span>
+          <span>Tomates cherry</span><span class="price">2,00€</span>
+          <span>Atún lata ×4</span><span class="price">5,00€</span>
+          <span>Paté</span><span class="price">2,00€</span>
+          <span>Ensalada preparada ×3</span><span class="price">6,00€</span>
+          <span>Pasta + salsa</span><span class="price">4,00€</span>
+          <span>Arroz + verduras</span><span class="price">5,00€</span>
+          <span>Huevos ×6</span><span class="price">2,00€</span>
         </div>
       </div>
-      <div><strong style="color:#e65100;">🥜 Snacks</strong>
-        <div style="display:grid;grid-template-columns:1fr auto;gap:2px 8px;margin:3px 0 6px;">
-          <span>Frutos secos 200g</span><span style="text-align:right;">5,00€</span>
-          <span>Patatas fritas ×3</span><span style="text-align:right;">5,00€</span>
-          <span>Chocolate / barritas</span><span style="text-align:right;">4,00€</span>
-          <span>Aceitunas</span><span style="text-align:right;">2,00€</span>
+      <div class="shop-category"><h4 style="color:#e65100;">🥜 Snacks</h4>
+        <div class="shop-items">
+          <span>Frutos secos 200g</span><span class="price">5,00€</span>
+          <span>Patatas fritas ×3</span><span class="price">5,00€</span>
+          <span>Chocolate / barritas</span><span class="price">4,00€</span>
+          <span>Aceitunas</span><span class="price">2,00€</span>
         </div>
       </div>
-      <div><strong style="color:#6a1b9a;">🥤 Bebidas</strong>
-        <div style="display:grid;grid-template-columns:1fr auto;gap:2px 8px;margin:3px 0 6px;">
-          <span>Agua mineral 6L ×2</span><span style="text-align:right;">3,00€</span>
-          <span>Cervezas ×12 latas</span><span style="text-align:right;">12,00€</span>
-          <span>Refrescos ×6</span><span style="text-align:right;">5,00€</span>
-          <span>Hielo ×2 bolsas</span><span style="text-align:right;">4,00€</span>
+      <div class="shop-category"><h4 style="color:#6a1b9a;">🥤 Bebidas</h4>
+        <div class="shop-items">
+          <span>Agua mineral 6L ×2</span><span class="price">3,00€</span>
+          <span>Cervezas ×12 latas</span><span class="price">12,00€</span>
+          <span>Refrescos ×6</span><span class="price">5,00€</span>
+          <span>Hielo ×2 bolsas</span><span class="price">4,00€</span>
         </div>
       </div>
-      <div style="grid-column:1/-1;"><strong style="color:#636e72;">🧂 Básicos</strong>
+      <div class="shop-category" style="grid-column:1/-1;"><h4 style="color:#636e72;display:inline;">🧂 Básicos</h4>
         <span style="margin-left:8px;">Sal, aceite, vinagre 3€ · Platos/vasos/servilletas 4€ · Bolsas basura 1€</span>
         <span style="float:right;font-weight:600;">8,00€</span>
       </div>
-      <div style="grid-column:1/-1;border-top:2px solid var(--border);padding-top:4px;text-align:right;font-weight:700;font-size:13px;">
-        Total provisiones: ~100 €
-      </div>
+      <div class="shop-total">Total provisiones: ~100 €</div>
     </div>
   </div>
 

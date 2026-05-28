@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comparador de Alojamientos · Viaje Velero</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="css/shared.css">
+<style>
+  .header { align-items:center; margin-bottom:20px; }
+  .accom-name { font-size:16px; font-weight:700; }
+  .accom-name small { font-size:11px; font-weight:400; color:var(--text-light); }
+  .accom-detail { font-size:12px; color:var(--text-light); }
+  .accom-detail span { margin-right:12px; }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="nav-brand" href="plan-viaje-ibiza.html">⛵ Viaje Velero</a>
+  <div class="nav-links">
+    <a href="plan-viaje-ibiza.html" class="nav-link">Plan</a>
+    <a href="comparador-barcos.html" class="nav-link">Barcos</a>
+    <a href="comparador-vuelos.html" class="nav-link">Vuelos</a>
+    <a href="comparador-alojamientos.html" class="nav-link active">Alojamientos</a>
+    <a href="comparador-viaje.html" class="nav-link">Comparador</a>
+  </div>
+</nav>
+
+<div class="header">
+  <div>
+    <h1>🏠 Comparador de Alojamientos <span class="badge badge-info">beta</span></h1>
+    <small>Viaje a Baleares · 31 Ago 2026 · <span id="statsFuente"></span></small>
+  </div>
+  <div class="header-right">
+    <div id="statsFecha" class="small-label"></div>
+    <div id="statsTotal" style="font-size:13px;font-weight:600;"></div>
+  </div>
+</div>
+
+<div class="panel wf-bar">
+  <h2>📋 Workflow: <span>1. Consulta precios → 2. Edítalos aquí → 3. Exporta y guarda</span></h2>
+  <div class="wf-grid">
+    <div class="wf-status">
+      <strong>Estado:</strong> <span class="wf-msg" id="statusMsg">cargando...</span><br>
+      <strong>Datos:</strong> <span id="statusCount">—</span> alojamientos en <code>data/alojamientos.json</code>
+      <span id="statusEdits" style="display:none;"> · <span style="color:#e65100;">✏️ edits locales</span></span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <button class="btn btn-green" onclick="exportJSON()">💾 Exportar JSON</button>
+      <button class="btn" onclick="document.getElementById('importInput').click()">📂 Importar JSON</button>
+      <input type="file" id="importInput" accept=".json" style="display:none" onchange="importJSON(event)">
+      <button class="btn btn-danger" onclick="if(confirm('¿Eliminar edits locales?')){localStorage.removeItem('alojamientos_edits');location.reload();}">🔄 Resetear</button>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <div><label>Zona</label><select id="filterZona"><option value="all">Todas las zonas</option></select></div>
+  <div><label>Fuente</label><select id="filterFuente"><option value="all">Todas</option><option value="booking">Booking</option><option value="airbnb">Airbnb</option></select></div>
+  <div><label>Precio máx</label><input type="range" id="priceMax" min="100" max="1500" value="600" style="width:120px;"><span id="priceMaxLabel" style="font-size:12px;color:var(--text-light);">600 €</span></div>
+  <div><label>Rating min</label><select id="filterRating"><option value="0">Cualquiera</option><option value="7">7+</option><option value="8">8+</option><option value="8.5">8.5+</option><option value="9">9+</option></select></div>
+  <div><label>Ordenar</label><select id="filterSort"><option value="precio">Precio (menor)</option><option value="precio-desc">Precio (mayor)</option><option value="rating">Rating (mejor)</option><option value="rating-desc">Rating (peor)</option><option value="nombre">Nombre A-Z</option></select></div>
+</div>
+
+<div class="stat-row">
+  <div class="stat-box green"><div class="val" id="statMinPrice">—</div><div class="lbl">Más barato</div></div>
+  <div class="stat-box"><div class="val" id="statAvgPrice">—</div><div class="lbl">Precio medio</div></div>
+  <div class="stat-box warn"><div class="val" id="statMaxPrice">—</div><div class="lbl">Más caro</div></div>
+  <div class="stat-box"><div class="val" id="statCount">—</div><div class="lbl">Alojamientos</div></div>
+  <div class="stat-box"><div class="val" id="statZonas">—</div><div class="lbl">Zonas</div></div>
+</div>
+
+<div class="cards">
+  <div class="panel">
+    <h2>📍 Zonas <span class="count" id="zoneCount"></span></h2>
+    <div class="map-legend">
+      <span><span class="map-dot marina"></span> Marina Ibiza</span>
+      <span><span class="map-dot centro"></span> Centro / La Marina (a pie)</span>
+      <span><span class="map-dot playa"></span> Figueretas / Talamanca</span>
+      <span><span class="map-dot san-antonio"></span> San Antonio (taxi 35€)</span>
+    </div>
+    <div id="zoneGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:8px;"></div>
+  </div>
+  <div class="panel">
+    <h2>📊 Comparativa precios <span class="count" id="barCount"></span></h2>
+    <div id="barChart"></div>
+    <div style="display:flex;gap:12px;font-size:10px;color:var(--text-light);margin-top:8px;">
+      <span><span style="width:14px;height:10px;border-radius:3px;background:#00b4d8;display:inline-block;"></span> Precio/noche</span>
+      <span><span style="width:14px;height:10px;border-radius:3px;background:#003049;display:inline-block;"></span> + taxi</span>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>🏷️ Alojamientos <span class="count" id="cardCount"></span></h2>
+    <div id="cardList"></div>
+  </div>
+  <div class="panel">
+    <h2>📋 Todos <span class="count" id="tableCount"></span></h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th onclick="sortBy('nombre')">Nombre <span class="sort-arrow"></span></th>
+          <th onclick="sortBy('fuente')">Fuente <span class="sort-arrow"></span></th>
+          <th onclick="sortBy('ciudad')">Zona <span class="sort-arrow"></span></th>
+          <th onclick="sortBy('puntuacion')">Rating <span class="sort-arrow"></span></th>
+          <th onclick="sortBy('precio_total_eur')">Precio <span class="sort-arrow"></span></th>
+          <th>+Taxi</th>
+          <th>Servicios</th>
+          <th>✏️</th>
+          <th>🔗</th>
+        </tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>📈 Distribución precios</h2>
+    <div class="chart-wrap"><canvas id="priceChart" height="200"></canvas></div>
+  </div>
+</div>
+
+<script src="js/core/utils.js"></script>
+<script src="js/core/data-io.js"></script>
+<script src="js/core/ui.js"></script>
+<script src="js/pages/comparador-alojamientos.js"></script>
+</body>
+</html>
