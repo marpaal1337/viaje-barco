@@ -1,8 +1,8 @@
 # Planeamiento Náutico Ibiza · 1-3 Sep 2026
 
-**Barco:** Sun Odyssey 349 (10.3m · 3.44m manga · 1.95m calado · 20HP Yanmar)  
-**Patrón:** Sin patrón (autogestionado) · **Tripulación:** 6 personas  
-**Puerto base:** Marina Botafoc (38°54'31"N 1°26'06"E)
+**Barco:** Dufour 43 (14m · 2.5m manga · 1.8m calado · 25CV)  
+**Patrón:** Sin patrón (autogestionado) · **Tripulación:** 5 personas  
+**Puerto base:** Marina Ibiza (38°54'30"N 1°27'25"E)
 
 ---
 
@@ -46,7 +46,7 @@
 
 | WP | Nombre | Latitud N | Longitud E | Prof. (m) | Tipo |
 |:--:|--------|:---------:|:----------:|:---------:|------|
-| MB | Marina Botafoc | 38°54.52' | 01°26.10' | 5-8 | Puerto |
+| MB | Marina Ibiza | 38°54.50' | 01°27.42' | 5-8 | Puerto |
 | HP | Hostal Parque Ibiza | 38°54.54' | 01°25.86' | — | Tierra |
 | C1 | Salida puerto | 38°54.00' | 01°25.00' | 15-20 | Canal |
 | C2 | Punta ses Portes | 38°55.50' | 01°18.00' | 25-30 | Travieso |
@@ -75,7 +75,7 @@
 | CD → C1 | ENE | 11.0 | 132 min | 110 min | Orzando / ceñida. Viento de cara si embat |
 | **Total** | | **28.5** | **5.7 h** | **4.7 h** | |
 
-**Pernocta:** Marina Botafoc (amarre) ~30-40€/noche. Alternativa: fondeo nocturno no recomendado por riesgo de embarrancada y confort.
+**Pernocta:** Marina Ibiza (amarre) ~30-40€/noche. Alternativa: fondeo nocturno no recomendado por riesgo de embarrancada y confort.
 
 ### Día 2 — Miércoles 2 Sep: Puerto → Tagomago → Cala Benirràs → Puerto
 
@@ -86,7 +86,7 @@
 | BE → MB | S | 9.5 | 114 min (1.9 h) | 95 min (1.6 h) | Ceñida, viento de cara probable |
 | **Total** | | **37.0** | **7.4 h** | **6.1 h** | |
 
-**Pernocta:** Marina Botafoc (amarre) ~30-40€/noche.
+**Pernocta:** Marina Ibiza (amarre) ~30-40€/noche.
 
 ### Día 3 — Jueves 3 Sep: Porroig / Cala d'en Serra → Puerto (check-out 18:00)
 
@@ -178,47 +178,45 @@
 
 ## 7. Puertos y Precios
 
-### Marina Botafoc (Puerto base)
+### Marina Ibiza (Puerto base)
 | Concepto | Precio |
 |----------|:------:|
-| Amarre 10m (noche, Sep, temporada baja) | ~30-40 € |
+| Amarre 14m (noche, Sep, temporada baja) | ~30-40 € |
 | Electricidad y agua | Incluido |
 | Wifi | Sí (gratuito) |
 | Combustible (gasolina) | ~1.50-1.80 €/L |
 | Duchas | 3-5 €/uso (gratis en algunos contratos) |
 | Reserva | Recomendable 2 semanas antes |
-| **Contacto:** | www.marinabotafoc.com · +34 971 31 01 08 |
+| **Contacto:** | www.marinaibiza.com |
 
 ### Precios orientativos otros puertos
 
 | Puerto | Amarre 10m noche (Sep) | Amarre con electricidad | Distancia puerto |
 |--------|:----------------------:|:----------------------:|:----------------:|
-| Marina Botafoc (IBZ) | 30-40 € | Sí | 0 (base) |
-| Marina Ibiza | 50-70 € | Sí | 0.5 km |
+| Marina Ibiza (IBZ) | 30-40 € | Sí | 0 (base) |
 | Club Náutico Ibiza | 45-60 € | Sí | 1.5 km |
+| Marina Botafoc | 50-70 € | Sí | 1 km |
 | Port de Sant Antoni | 25-35 € | Sí | 10 MN (NO) |
 | Port de Santa Eulària | 25-35 € | Sí | 8 MN (NE) |
 | **Total amarres 3 días** | **~90-120 €** | | |
 
 ---
 
-## 8. Características Sun Odyssey 349
+## 8. Características Dufour 43
 
 | Especificación | Valor |
 |----------------|:-----:|
-| Eslora total | 10.30 m |
-| Eslora flotación | 9.00 m |
-| Manga | 3.44 m |
-| Calado | 1.95 m |
-| Desplazamiento | 5,400 kg |
-| Lastre | 1,610 kg |
-| Motor | Yanmar 20HP |
-| Combustible | 50 L |
-| Agua dulce | 130 L |
+| Eslora total | 14.00 m |
+| Manga | 2.50 m |
+| Calado | 1.80 m |
+| Desplazamiento | ~8,500 kg |
+| Motor | 25CV |
+| Combustible | ~80 L |
+| Agua dulce | ~200 L |
 | Velocidad crucero | 5-6 nudos |
 | Velocidad máxima | 7-8 nudos |
 | Gasto gasoil | ~1.5-2 L/h a 5 nudos |
-| Autonomía motor | ~25-30 h / ~120 MN |
+| Autonomía motor | ~30+ h / ~150 MN |
 
 ### Consumo estimado combustible
 | Día | Navegación motor | Gasto |
@@ -234,8 +232,8 @@
 
 | Señal | Posición | Descripción |
 |-------|:--------:|-------------|
-| Boya de entrada MB | 38°54.4'N 1°26.3'E | Verde (estribor) + Roja (babor) |
-| Canal de acceso MB | 38°54.0'N 1°25.5'E | Balizado, calado 5m mínimo |
+| Boya de entrada MB | 38°54.4'N 1°27.5'E | Verde (estribor) + Roja (babor) |
+| Canal de acceso MB | 38°54.0'N 1°26.5'E | Balizado, calado 5m mínimo |
 | Boya del Bajo Caragoler | 38°55.0'N 1°16.0'E | Boya cardinal Oeste (temporada alta) |
 | Bajo de sa Gorra | 38°55.0'N 1°28.5'E | Boya de peligro aislado |
 
@@ -288,7 +286,7 @@
 | Canal | Uso |
 |:-----:|-----|
 | 16 | Llamada y socorro (escucha permanente si hay VHF) |
-| 74 | Tráfico portuario (Marina Botafoc) |
+| 74 | Tráfico portuario (Marina Ibiza) |
 | 09 | Llamada entre embarcaciones |
 | 72 | Work (trabajo) |
 | **Emergencia:** 112 / Cruz Roja: +34 971 31 25 00 |
@@ -300,7 +298,7 @@
 ### Día 1 — Recomendación salida: **10:30**
 ```
 10:30-12:00  Briefing, inspección, provisiones
-12:00-12:30  Salida MB, rumbo W (270°) · motor hasta Punta ses Portes
+12:00-12:30  Salida Marina Ibiza, rumbo W (270°) · motor hasta Punta ses Portes
 12:30-13:30  Navegación a vela CC · embat E favorable
 13:30-16:00  Fondeo CC · baño, snorkel, comida
 16:00-16:30  Levantar fondeo · rumbo S a CD
@@ -312,7 +310,7 @@
 
 ### Día 2 — Recomendación salida: **09:00**
 ```
-09:00-09:30  Salida MB, rumbo E a Tagomago
+09:00-09:30  Salida Marina Ibiza, rumbo E a Tagomago
 09:30-12:00  Travesía MB→TA · 16 MN a vela (través/embat) · rumbo 060°
 12:00-14:00  Fondeo TA (lado S) · snorkel · comida
 14:00-14:30  Levantar · rumbo NW a BE
@@ -324,7 +322,7 @@
 
 ### Día 3 — Recomendación salida: **09:00**
 ```
-09:00-09:30  Salida MB, rumbo W a Porroig
+09:00-09:30  Salida Marina Ibiza, rumbo W a Porroig
 09:30-11:00  MB→PR · motor (viento flojo mañana)
 11:00-13:00  Fondeo PR · último baño · comida
 13:00-15:00  PR→MB · vuelta
@@ -373,7 +371,7 @@
 | Emergencias generales | 112 |
 | Cruz Roja Ibiza | +34 971 31 25 00 |
 | Salvamento Marítimo | +34 900 202 202 |
-| Marina Botafoc | +34 971 31 01 08 |
+| Marina Ibiza | +34 971 19 50 00 |
 | Guardia Civil Ibiza | +34 971 30 10 00 |
 | Hospital Can Misses (IBZ) | +34 971 39 70 00 |
 | Aeropuerto Ibiza | +34 913 21 10 00 |
