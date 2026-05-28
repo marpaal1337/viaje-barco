@@ -3,36 +3,43 @@ window.VV = window.VV || {};
 VV.FlightTimeline = {
   _tooltipTarget: null,
 
-  render: function(containerId, filtered, selected, toggleSelectFn) {
-    const axis = document.querySelector(`#${containerId} .timeline-axis`);
-    const track = document.querySelector(`#${containerId} .timeline-track`);
-    if (!axis || !track) return;
+  render: function(containerId, filtered, selected, toggleSelectFn, sortField, sortAsc) {
+    const wrapper = document.getElementById(containerId);
+    if (!wrapper) return;
+    const axis = wrapper.querySelector('.timeline-axis');
+    const scrollEl = wrapper.querySelector('.timeline-scroll');
+    const cursorEl = wrapper.querySelector('.tl-cursor');
+    const track = scrollEl ? scrollEl.querySelector('.timeline-track') : null;
+    if (!axis || !scrollEl || !track || !cursorEl) return;
 
     if (!filtered || filtered.length === 0) {
-      axis.innerHTML = '<div style="text-align:center;color:var(--text-light);padding:20px;font-size:13px;">Sin vuelos para mostrar</div>';
+      axis.innerHTML = '<div class="axis-inner" style="width:100%;text-align:center;padding:20px 0;font-size:13px;color:var(--text-light);">Sin vuelos para mostrar</div>';
       track.innerHTML = '';
+      scrollEl.onscroll = null;
       return;
     }
 
     const TOTAL_MIN = 24 * 60;
     const HOUR_WIDTH = 72;
-    const PADDING = 0;
-    const totalWidth = PADDING * 2 + (TOTAL_MIN / 60) * HOUR_WIDTH;
+    const totalWidth = (TOTAL_MIN / 60) * HOUR_WIDTH;
 
-    axis.innerHTML = '';
-    axis.style.width = totalWidth + 'px';
+    const axisInner = document.createElement('div');
+    axisInner.className = 'axis-inner';
+    axisInner.style.width = totalWidth + 'px';
     for (let h = 0; h < 24; h++) {
       const isMajor = h % 2 === 0;
       const tick = document.createElement('div');
       tick.className = `tick${isMajor ? ' major' : ''}`;
       tick.style.left = ((h / 24) * totalWidth) + 'px';
       tick.textContent = isMajor ? String(h).padStart(2, '0') + ':00' : '';
-      axis.appendChild(tick);
+      axisInner.appendChild(tick);
     }
+    axis.innerHTML = '';
+    axis.appendChild(axisInner);
 
     const groups = {};
     filtered.forEach(f => {
-      const key = f.origen.codigo + '→' + f.destino.codigo;
+      const key = f.origen.codigo + '\u2192' + f.destino.codigo;
       if (!groups[key]) groups[key] = [];
       groups[key].push(f);
     });
@@ -55,7 +62,7 @@ VV.FlightTimeline = {
       const header = document.createElement('div');
       header.className = 'tl-group';
       header.innerHTML = `<div class="tl-group-header">
-        ✈️ ${routeKey} <span style="font-weight:400;">· ${flights[0].origen.nombre} → ${flights[0].destino.nombre}</span>
+        \u2708\ufe0f ${routeKey} <span style="font-weight:400;">\u00b7 ${flights[0].origen.nombre} \u2192 ${flights[0].destino.nombre}</span>
         <span class="tl-route-count">${flights.length} vuelos</span>
       </div>`;
       header.style.position = 'relative';
@@ -78,7 +85,7 @@ VV.FlightTimeline = {
       }
       body.appendChild(grid);
 
-      flights.sort((a, b) => VV.timeToMins(a.salida) - VV.timeToMins(b.salida));
+      VV.FlightTimeline._sortFlights(flights, sortField, sortAsc);
 
       flights.forEach((f, fi) => {
         const dep = VV.timeToMins(f.salida);
@@ -119,7 +126,7 @@ VV.FlightTimeline = {
 
         const priceBadge = document.createElement('span');
         priceBadge.className = 'tl-price-badge';
-        priceBadge.textContent = f.precio_eur + '€';
+        priceBadge.textContent = f.precio_eur + '\u20AC';
         bar.appendChild(priceBadge);
 
         bar.onclick = function(e) {
@@ -136,6 +143,80 @@ VV.FlightTimeline = {
 
       track.appendChild(body);
       currentY += 42;
+    });
+
+    scrollEl.onscroll = function() {
+      axis.scrollLeft = this.scrollLeft;
+      VV.FlightTimeline._updateCursor(this);
+    };
+
+    scrollEl.onmousemove = function(e) {
+      VV.FlightTimeline._showCursor(this, e);
+    };
+    scrollEl.onmouseleave = function() {
+      const c = wrapper.querySelector('.tl-cursor');
+      if (c) c.classList.remove('tl-cursor-show');
+      VV.FlightTimeline._hideTooltip();
+    };
+
+    VV.FlightTimeline._cursorScrollEl = scrollEl;
+    VV.FlightTimeline._cursorWrapper = wrapper;
+  },
+
+  _showCursor: function(scrollEl, e) {
+    const rect = scrollEl.getBoundingClientRect();
+    const x = e.clientX - rect.left + scrollEl.scrollLeft;
+    const wrapper = VV.FlightTimeline._cursorWrapper;
+    if (!wrapper) return;
+    const c = wrapper.querySelector('.tl-cursor');
+    if (!c) return;
+    c.style.left = x + 'px';
+    c.classList.add('tl-cursor-show');
+
+    const TOTAL_MIN = 24 * 60;
+    const HOUR_WIDTH = 72;
+    const totalWidth = (TOTAL_MIN / 60) * HOUR_WIDTH;
+    const mins = Math.round((x / totalWidth) * TOTAL_MIN);
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    const label = c.querySelector('.tl-cursor-label') || (function() {
+      const l = document.createElement('span');
+      l.className = 'tl-cursor-label';
+      c.appendChild(l);
+      return l;
+    })();
+    label.textContent = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  },
+
+  _updateCursor: function(scrollEl) {
+    const wrapper = VV.FlightTimeline._cursorWrapper;
+    if (!wrapper) return;
+    const c = wrapper.querySelector('.tl-cursor');
+    if (c) c.classList.remove('tl-cursor-show');
+  },
+
+  _updateCursor: function(scrollEl) {
+    const wrapper = VV.FlightTimeline._cursorWrapper;
+    if (!wrapper) return;
+    const c = wrapper.querySelector('.tl-cursor');
+    if (!c || !c.classList.contains('tl-cursor-show')) return;
+    const left = parseFloat(c.style.left);
+    if (!isNaN(left)) c.style.left = left + 'px';
+  },
+
+  _sortFlights: function(flights, sortField, sortAsc) {
+    const desc = sortAsc ? 1 : -1;
+    flights.sort((a, b) => {
+      let cmp = 0;
+      if (sortField === 'precio') cmp = a.precio_eur - b.precio_eur;
+      else if (sortField === 'salida') cmp = VV.timeToMins(a.salida) - VV.timeToMins(b.salida);
+      else if (sortField === 'llegada') cmp = VV.timeToMins(a.llegada) - VV.timeToMins(b.llegada);
+      else if (sortField === 'duracion') cmp = (a.duracion_min||0) - (b.duracion_min||0);
+      else if (sortField === 'aerolinea') cmp = a.aerolinea.localeCompare(b.aerolinea);
+      else if (sortField === 'ruta') cmp = (a.origen.codigo + a.destino.codigo).localeCompare(b.origen.codigo + b.destino.codigo);
+      else if (sortField === 'fecha') cmp = a.fecha.localeCompare(b.fecha);
+      else cmp = VV.timeToMins(a.salida) - VV.timeToMins(b.salida);
+      return cmp * desc;
     });
   },
 
