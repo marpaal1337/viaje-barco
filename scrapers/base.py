@@ -104,6 +104,17 @@ def edit_prompt_generic(output_file, items, fields, label_fn):
     print(f"Guardado: {output_file} ({len(arr)} items)")
 
 
+def load_scrape_params():
+    """Load search params from SCRAPE_PARAMS env var (set by server.py)."""
+    raw = os.environ.get("SCRAPE_PARAMS")
+    if raw:
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            pass
+    return {}
+
+
 def save_json(output_file, data):
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     with open(output_file, "w", encoding="utf-8") as f:

@@ -8,12 +8,14 @@ from datetime import datetime
 
 from .base import (
     configure_stdout, get_data_dir, build_id_boat,
-    make_metadata, print_header, save_json, edit_prompt_generic
+    make_metadata, print_header, save_json, edit_prompt_generic, load_scrape_params
 )
 
 OUTPUT_FILE = os.path.join(get_data_dir(), "barcos.json")
 
-ISLANDS = [
+_PARAMS = load_scrape_params()
+
+ISLANDS = _PARAMS.get("islands", [
     {
         "isla": "Ibiza",
         "puertos": ["Marina Ibiza", "Club de Mar Ibiza", "Marina Botafoc", "Port Ibiza", "San Antonio", "Santa Eulalia"],
@@ -34,7 +36,7 @@ ISLANDS = [
         "puertos": ["La Savina"],
         "slug": "formentera"
     },
-]
+])
 
 BOAT_TYPES = {
     "velero": "Velero",

@@ -8,21 +8,23 @@ from datetime import datetime
 
 from .base import (
     configure_stdout, get_data_dir, build_id_accommodation,
-    make_metadata, print_header, save_json, edit_prompt_generic
+    make_metadata, print_header, save_json, edit_prompt_generic, load_scrape_params
 )
 
 OUTPUT_FILE = os.path.join(get_data_dir(), "alojamientos.json")
 
-DESTINATIONS = [
+_PARAMS = load_scrape_params()
+
+DESTINATIONS = _PARAMS.get("destinations", [
     {"ciudad": "Ibiza", "zona": "Ibiza", "termino": "Ibiza", "coords": {"lat": 38.9067, "lng": 1.4206}},
     {"ciudad": "Eivissa (centro)", "zona": "Eivissa", "termino": "Eivissa", "coords": {"lat": 38.9085, "lng": 1.4333}},
     {"ciudad": "Ibiza - Marina", "zona": "Marina Ibiza", "termino": "Marina Ibiza", "coords": {"lat": 38.9093, "lng": 1.4476}},
-]
+])
 
-CHECKIN = "2026-08-31"
-CHECKOUT = "2026-09-01"
-ADULTOS = 5
-MENORES = 0
+CHECKIN = _PARAMS.get("checkin", "2026-08-31")
+CHECKOUT = _PARAMS.get("checkout", "2026-09-01")
+ADULTOS = _PARAMS.get("adultos", 5)
+MENORES = _PARAMS.get("menores", 0)
 
 SERVICES_MAP = {
     "wifi": "WiFi", "piscina": "Piscina", "parking": "Parking",

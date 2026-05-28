@@ -8,21 +8,23 @@ from datetime import datetime
 
 from .base import (
     configure_stdout, get_data_dir, build_id_flight,
-    make_metadata, print_header, save_json, edit_prompt_generic
+    make_metadata, print_header, save_json, edit_prompt_generic, load_scrape_params
 )
 
 OUTPUT_FILE = os.path.join(get_data_dir(), "vuelos.json")
 
-ROUTES = [
+_PARAMS = load_scrape_params()
+
+ROUTES = _PARAMS.get("routes", [
     ("VLC", "IBZ", "Valencia", "Ibiza"),
     ("MAD", "IBZ", "Madrid", "Ibiza"),
     ("BLQ", "IBZ", "Bolonia", "Ibiza"),
     ("VLC", "MAH", "Valencia", "Menorca"),
     ("MAD", "MAH", "Madrid", "Menorca"),
     ("BLQ", "MAH", "Bolonia", "Menorca"),
-]
+])
 
-DATES = ["2026-08-31", "2026-09-01", "2026-09-02", "2026-09-03"]
+DATES = _PARAMS.get("dates", ["2026-08-31", "2026-09-01", "2026-09-02", "2026-09-03"])
 
 
 def normalize_flights(flights, origin_name, dest_name, tipo):

@@ -3,11 +3,11 @@
 
 const TABS = {
   barcos: { DATA: null, filtered: [], sortField: 'precio_dia_baja', sortAsc: true, chart: null, _rendered: false,
-    storageKey: 'barcos_edits', dataFile: 'data/barcos.json', importId: 'importBarcos' },
+    storageKey: 'barcos_edits', dataFile: '../data/barcos.json', importId: 'importBarcos' },
   vuelos: { DATA: null, filtered: [], sortField: 'precio', sortAsc: true, chart: null, selected: [], _rendered: false,
-    storageKey: 'vuelos_edits', dataFile: 'data/vuelos.json', importId: 'importVuelos' },
+    storageKey: 'vuelos_edits', dataFile: '../data/vuelos.json', importId: 'importVuelos' },
   alojamientos: { DATA: null, filtered: [], sortField: 'precio_total_eur', sortAsc: true, chart: null, _rendered: false,
-    storageKey: 'alojamientos_edits', dataFile: 'data/alojamientos.json', importId: 'importAloj' },
+    storageKey: 'alojamientos_edits', dataFile: '../data/alojamientos.json', importId: 'importAloj' },
 };
 
 let currentTab = 'barcos';
@@ -35,27 +35,21 @@ async function loadAll() {
     t._rendered = true;
     populateBarcosFilters();
     t.applyFilters = () => { applyBarcos(); };
-    t.exportJSON = () => exportBarcosJSON();
     t.applyFilters();
-    VV.updateWF('barcos', t.DATA, document.querySelector('.tab-panel[data-tab="barcos"]'));
     wireBarcos();
   }
   if (TABS.vuelos.DATA) {
     const t = TABS.vuelos;
     populateVuelosFilters();
     t.applyFilters = () => { applyVuelos(); };
-    t.exportJSON = () => exportVuelosJSON();
     t.openGF = () => openGoogleFlights();
     t.clearSel = () => { t.selected = []; applyVuelos(); };
-    VV.updateWF('vuelos', t.DATA, document.querySelector('.tab-panel[data-tab="vuelos"]'));
     wireVuelos();
   }
   if (TABS.alojamientos.DATA) {
     const t = TABS.alojamientos;
     populateAlojFilters();
     t.applyFilters = () => { applyAloj(); };
-    t.exportJSON = () => exportAlojJSON();
-    VV.updateWF('alojamientos', t.DATA, document.querySelector('.tab-panel[data-tab="alojamientos"]'));
     wireAloj();
   }
   updateGlobalStats();
@@ -280,17 +274,6 @@ function wireBarcos() {
       applyBarcos();
     });
   });
-  document.getElementById('importBarcos').addEventListener('change', e => {
-    VV.importJSON(e.target.files[0], (imported) => {
-      if (imported.barcos) { TABS.barcos.DATA = imported; VV.loadEdits('barcos', imported);
-        populateBarcosFilters(); applyBarcos(); VV.updateWF('barcos', imported, p); }
-    });
-    e.target.value = '';
-  });
-}
-
-function exportBarcosJSON() {
-  VV.exportJSON(TABS.barcos.DATA, 'barcos-actualizados.json');
 }
 
 // ── VUELOS ──
@@ -438,17 +421,6 @@ function wireVuelos() {
     TABS.vuelos.sortAsc = !v.includes('-desc');
     sortData('vuelos'); renderVuelos();
   });
-  document.getElementById('importVuelos').addEventListener('change', e => {
-    VV.importJSON(e.target.files[0], (imported) => {
-      if (imported.alternativas) { TABS.vuelos.DATA = imported; VV.loadEdits('vuelos', imported);
-        populateVuelosFilters(); applyVuelos(); VV.updateWF('vuelos', imported, p); }
-    });
-    e.target.value = '';
-  });
-}
-
-function exportVuelosJSON() {
-  VV.exportJSON(TABS.vuelos.DATA, 'vuelos-actualizados.json');
 }
 
 function openGoogleFlights() {}
@@ -566,18 +538,117 @@ function wireAloj() {
     TABS.alojamientos.sortAsc = !v.includes('-desc');
     sortData('alojamientos'); renderAloj();
   });
-  document.getElementById('importAloj').addEventListener('change', e => {
-    VV.importJSON(e.target.files[0], (imported) => {
-      if (imported.alojamientos) { TABS.alojamientos.DATA = imported; VV.loadEdits('alojamientos', imported);
-        populateAlojFilters(); applyAloj(); VV.updateWF('alojamientos', imported, p); }
-    });
-    e.target.value = '';
-  });
 }
 
-function exportAlojJSON() {
-  VV.exportJSON(TABS.alojamientos.DATA, 'alojamientos-actualizados.json');
+// ── Scraper API ──
+let _serverOk = null;
+
+async function probeServer() {
+  try {
+    const r = await fetch('/api/scrape/barcos', { method: 'OPTIONS', signal: AbortSignal.timeout(2000) });
+    _serverOk = true;
+  } catch {
+    _serverOk = false;
+  }
 }
+
+function showStaticHint(p) {
+  const bar = document.createElement('div');
+  bar.className = 'search-result-bar';
+  bar.style.cssText = 'background:#fff8e1;color:#e65100;display:block;line-height:1.5;font-weight:400;font-size:12px;';
+  bar.innerHTML = `<strong>🔍 Modo lectura</strong> — Los datos actuales son los que ves en pantalla.
+    Para rescrapear con nuevos parámetros:
+    <code style="background:#eee;padding:1px 6px;border-radius:4px;font-size:11px;">python server.py</code>
+    y abre <code style="background:#eee;padding:1px 6px;border-radius:4px;font-size:11px;">http://localhost:8080</code>`;
+  const old = p.querySelector('.search-result-bar');
+  if (old) old.remove();
+  const searchBar = p.querySelector('.search-bar');
+  if (searchBar) searchBar.after(bar);
+}
+
+async function runScraper(type) {
+  const p = document.querySelector(`.tab-panel[data-tab="${type}"]`);
+  if (!p) return;
+  const btn = p.querySelector('.btn-search');
+  const spinner = p.querySelector('.spinner');
+
+  if (_serverOk === false) {
+    showStaticHint(p);
+    return;
+  }
+
+  btn.disabled = true;
+  spinner.style.display = 'inline-flex';
+  const old = p.querySelector('.search-result-bar');
+  if (old) old.remove();
+
+  const params = {};
+  if (type === 'barcos') {
+    const isla = p.querySelector('.s-isla').value;
+    params.islands = [{ isla, puertos: [isla], slug: isla.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') }];
+    const tipo = p.querySelector('.s-tipo').value;
+    if (tipo !== 'all') params.tipo = tipo;
+  } else if (type === 'vuelos') {
+    const origen = p.querySelector('.s-origen').value;
+    const destino = p.querySelector('.s-destino-v').value;
+    const fechaIda = p.querySelector('.s-fecha-ida').value;
+    const fechaVuelta = p.querySelector('.s-fecha-vuelta').value;
+    params.routes = [[origen, destino, origen, destino]];
+    params.dates = [fechaIda, fechaVuelta];
+  } else if (type === 'alojamientos') {
+    const ciudad = p.querySelector('.s-destino-a').value;
+    params.destinations = [{ ciudad, zona: ciudad, termino: ciudad }];
+    params.checkin = p.querySelector('.s-checkin').value;
+    params.checkout = p.querySelector('.s-checkout').value;
+    params.adultos = parseInt(p.querySelector('.s-adultos').value) || 5;
+  }
+
+  try {
+    const res = await fetch(`/api/scrape/${type}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    });
+    const data = await res.json();
+
+    if (data.status === 'ok' && data.data) {
+      TABS[type].DATA = data.data;
+      if (TABS[type].chart) { TABS[type].chart.destroy(); TABS[type].chart = null; }
+      TABS[type].selected = [];
+      TABS[type]._rendered = false;
+      VV.saveEdits(type, data.data);
+
+      if (type === 'barcos') { populateBarcosFilters(); applyBarcos(); }
+      else if (type === 'vuelos') { populateVuelosFilters(); applyVuelos(); }
+      else if (type === 'alojamientos') { populateAlojFilters(); applyAloj(); }
+
+      updateGlobalStats();
+      const items = data.data.barcos || data.data.alternativas || data.data.alojamientos || [];
+      showResultBar(p, `✅ ${items.length} resultados`);
+    } else {
+      showResultBar(p, `❌ ${data.error || 'Error del scraper'}`, true);
+    }
+  } catch {
+    showStaticHint(p);
+    _serverOk = false;
+  }
+
+  btn.disabled = false;
+  spinner.style.display = 'none';
+}
+
+function showResultBar(p, msg, isError) {
+  const bar = document.createElement('div');
+  bar.className = 'search-result-bar' + (isError ? ' error' : '');
+  bar.textContent = msg;
+  const old = p.querySelector('.search-result-bar');
+  if (old) old.remove();
+  const searchBar = p.querySelector('.search-bar');
+  if (searchBar) searchBar.after(bar);
+  if (!isError) setTimeout(() => { if (bar.parentNode) bar.remove(); }, 6000);
+}
+
+window.runScraper = runScraper;
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', async () => {
@@ -586,6 +657,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btn) switchTab(btn.dataset.tab);
   });
   await loadAll();
+  await probeServer();
+  const modeEl = document.getElementById('modeBadge');
+  if (modeEl) modeEl.textContent = _serverOk ? '⚡ servidor' : '📄 datos estáticos';
   window.TABS = TABS;
   window.switchTab = switchTab;
 });
