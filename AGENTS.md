@@ -21,15 +21,17 @@ Planificación de un viaje en velero sin patrón a Ibiza para 5 personas (3 Vale
 ```
 viaje-barco/
 ├── AGENTS.md                    # Contexto acumulativo del proyecto
-├── index.html                   # Redirige a plan-viaje-ibiza.html
-├── plan-viaje-ibiza.html        # Plan interactivo (mapa + timeline + chart) — shell thin
-├── comparador-barcos.html       # Comparador de barcos — shell thin
-├── comparador-vuelos.html       # Comparador de vuelos — shell thin
-├── comparador-alojamientos.html # Comparador de alojamientos — shell thin
-├── comparador-viaje.html        # Comparador unificado (tabs) — shell thin
+├── index.html                   # Redirige a html/plan-viaje-ibiza.html
 ├── planeamiento-nautico.md      # Documento de navegación: waypoints, peligros, fondeos
 ├── requirements.txt             # Python dependencies
 ├── .env.example
+│
+├── html/                        # Páginas HTML (shells finos)
+│   ├── plan-viaje-ibiza.html    # Plan interactivo (mapa + timeline + chart)
+│   └── comparador-viaje.html    # Comparador unificado por tabs (barcos+vuelos+aloj.)
+│
+├── scripts/                     # Entry points Python
+│   └── scrape.py                # Entry point unificado: scrape.py boats|samboat|flights|accommodations
 │
 ├── css/
 │   └── shared.css               # CSS compartido: variables, reset, utilidades, componentes
@@ -37,16 +39,12 @@ viaje-barco/
 ├── js/
 │   ├── core/
 │   │   ├── utils.js             # Utilidades: fechas, horas, colores, helpers
-│   │   ├── data-io.js           # Import/export JSON, localStorage edits, workflow status
+│   │   ├── data-io.js           # Load/save edits en localStorage
 │   │   └── ui.js                # Componentes UI: edit-in-place, charts, bar charts, buckets
 │   ├── components/
-│   │   ├── flight-timeline.js   # Timeline de vuelos (gantt horizontal con tooltips)
-│   │   └── map.js               # Mapa Leaflet con capas, rutas, marcadores
+│   │   └── flight-timeline.js   # Timeline de vuelos (gantt horizontal con tooltips)
 │   └── pages/
 │       ├── plan-viaje.js        # Lógica del plan: mapa, gráfico donut, toggleDay
-│       ├── comparador-barcos.js # Filtros, tabla, escenarios, chart (barcos)
-│       ├── comparador-vuelos.js # Filtros, timeline, combos, selección (vuelos)
-│       ├── comparador-alojamientos.js # Filtros, zonas, cards, tabla (alojamientos)
 │       └── comparador-viaje.js  # Tabs unificado con los 3 tipos de datos
 │
 ├── scrapers/
@@ -57,11 +55,6 @@ viaje-barco/
 │   ├── flights.py               # Scraper Google Flights/Ryanair
 │   └── accommodations.py        # Scraper Booking + Airbnb
 │
-├── scraper_barcos.py            # Entry point thin → scrapers.boats
-├── scraper_barcos_samboat.py    # Entry point thin → scrapers.boats_samboat
-├── scraper_vuelos.py            # Entry point thin → scrapers.flights
-├── scraper_alojamientos.py      # Entry point thin → scrapers.accommodations
-│
 └── data/
     ├── vuelos.json              # Datos de vuelos scrapeados/importados
     ├── barcos.json              # Datos de barcos scrapeados/importados
@@ -69,13 +62,14 @@ viaje-barco/
 ```
 
 ### Arquitectura
-- **HTMLs** son shells finos: estructura + imports → toda la lógica en JS/Python externo
-- **CSS compartido** (`css/shared.css`) evita duplicación de estilos entre las 5 páginas
-- **JS core** (`js/core/*`): utilidades reutilizables (fechas, charts, edit-in-place, import/export)
-- **JS components** (`js/components/*`): componentes complejos (timeline de vuelos, mapa Leaflet)
+- **HTMLs** en `html/`: 2 páginas (plan + comparador unificado)
+- **CSS compartido** (`css/shared.css`) evita duplicación
+- **JS core** (`js/core/*`): utilidades reutilizables (fechas, charts, edit-in-place, localStorage)
+- **JS components** (`js/components/*`): timeline de vuelos
 - **JS pages** (`js/pages/*`): lógica específica de cada página
 - **scrapers package** (`scrapers/`): `base.py` con CLI compartido + módulos por fuente
-- **scraper_*.py**: entry points thin que delegan al package
+- **scripts/scrape.py**: entry point unificado
+- **Uso**: `python scripts/scrape.py boats --auto`
 
 ## Ruta navegación (3 días)
 | Día | Ruta | MN | Pernocta |
